@@ -28,7 +28,7 @@ impl MMU {
 
     pub fn read_byte(&mut self, addr: u16) -> u8 {
         match addr {
-            0x1000...0x7FFF => self.rom[addr as usize], // ROM
+            0x0000...0x7FFF => self.rom[addr as usize], // ROM
             0x8000...0x9FFF => panic!("MMU ERROR: Load from GPU not implemented"), // Load from GPU
             0xA000...0xBFFF => panic!("MMU ERROR: Load from cart RAM not implemented"), // Load from cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize], // Working RAM
@@ -44,7 +44,16 @@ impl MMU {
     }
 
     pub fn write_byte(&mut self, addr: u16, value: u8) {
-        panic!("write_byte not yet implemented")
+        match addr {
+            0x0000...0x7FFF => self.rom[addr as usize] = value, // ROM
+            0x8000...0x9FFF => panic!("MMU ERROR: Write to GPU not implemented"), // Write to GPU
+            0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Load from cartridge RAM
+            0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize] = value, // Working RAM
+            0xFE00...0xFE9F => panic!("MMU ERROR: Write graphics sprite information not implemented"), // Graphics - sprite information
+            0xFF00...0xFF7F => panic!("MMU ERROR: Memory mapped I/O not implemented"), // Memory mapped I/O
+            0xFF80...0xFFFF => self.zram[(addr & 0x7F) as usize] = value, // Zero page RAM
+            _ => (),
+        }
     }
 
     pub fn write_word(&mut self, addr: u16, value: u16) {

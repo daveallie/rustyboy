@@ -51,13 +51,26 @@ impl Registers {
         self.c = (value & 0x00FF) as u8; // second byte
     }
 
-    pub fn get_bc(&mut self) -> u16 {
-        (self.b as u16) << 8 | (self.c as u16)
+    pub fn get_bc(&self) -> u16 {
+        self.get_unioned_address(self.b, self.c)
+    }
+
+    pub fn set_hl(&mut self, value: u16) {
+        self.h = (value >> 8) as u8;     // first byte
+        self.l = (value & 0x00FF) as u8; // second byte
+    }
+
+    pub fn get_hl(&self) -> u16 {
+        self.get_unioned_address(self.h, self.l)
     }
 
     pub fn get_flag(&mut self, flag: Flags) -> bool {
         let flag_byte = flag as u8;
         self.f & flag_byte > 0
+    }
+
+    fn get_unioned_address(&self, addr1: u8, addr2: u8) -> u16 {
+        (addr1 as u16) << 8 | (addr2 as u16)
     }
 
     fn set_flag(&mut self, flag: Flags, flagged: bool) {
