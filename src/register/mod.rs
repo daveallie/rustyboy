@@ -22,11 +22,16 @@ pub struct Registers {
     pub sp: u16, // Stack pointer
 }
 
-enum Flags {
-    Z = 0b10000000,
-    N = 0b01000000,
-    H = 0b00100000,
-    C = 0b00010000,
+// http://www.z80.info/z80sflag.htm
+pub enum Flags {
+    S  = 0b10000000,
+    Z  = 0b01000000,
+    F5 = 0b00100000,
+    H  = 0b00010000,
+    F3 = 0b00001000,
+    PV = 0b00000100,
+    N  = 0b00000010,
+    C  = 0b00000001,
 }
 
 impl Registers {

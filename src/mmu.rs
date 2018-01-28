@@ -57,7 +57,8 @@ impl MMU {
     }
 
     pub fn write_word(&mut self, addr: u16, value: u16) {
-        panic!("write_word not yet implemented")
+        self.write_byte(addr, (value & 0xFF) as u8);
+        self.write_byte(addr + 1, (value >> 8) as u8);
     }
 
     fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {

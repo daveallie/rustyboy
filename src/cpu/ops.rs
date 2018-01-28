@@ -1,4 +1,7 @@
-impl ::cpu::CPU {
+use cpu::CPU;
+use register::Flags;
+
+impl CPU {
     pub fn step(&mut self) -> u32 {
         let code = self.get_byte();
         let read_regs = self.reg;
@@ -59,6 +62,10 @@ impl ::cpu::CPU {
                 self.mmu.write_byte(self.reg.get_hl(), value);
                 2
             }
+            0x3E => { // load byte into a
+                self.reg.a = self.get_byte();
+                2
+            }
             0xAF => {
                 self.reg.alu_xor(read_regs.a);
                 1
@@ -66,6 +73,46 @@ impl ::cpu::CPU {
             0xC3 => { // jump to location point by word
                 self.reg.pc = self.get_word();
                 3
+            }
+            0xCC => { // call next word conditional on Z flag
+                let new_pc = read_regs.pc + 2;
+
+                if self.reg.get_flag(Flags::Z) {
+                    self.push_stack(new_pc);
+                    self.reg.pc = self.get_word();
+                    6
+                } else {
+                    self.reg.pc = new_pc;
+                    3
+                }
+            }
+            0xE0 => { // call next word if P/V flag is reset
+                let new_pc = read_regs.pc + 2;
+
+                if self.reg.get_flag(Flags::PV) {
+                    self.reg.pc = new_pc;
+                    3
+                } else {
+                    self.push_stack(new_pc);
+                    self.reg.pc = self.get_word();
+                    6
+                }
+            }
+            0xF9 => { // Load hl into stack pointer
+                self.reg.sp = self.reg.get_hl();
+                1
+            }
+            0xFC => { // call next word if S flag is set
+                let new_pc = read_regs.pc + 2;
+
+                if self.reg.get_flag(Flags::S) {
+                    self.push_stack(new_pc);
+                    self.reg.pc = self.get_word();
+                    6
+                } else {
+                    self.reg.pc = new_pc;
+                    3
+                }
             }
             _ => {
                 panic!("unknown op code 0x{:X}", code)

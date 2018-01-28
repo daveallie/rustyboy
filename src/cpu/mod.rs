@@ -26,4 +26,15 @@ impl CPU {
         self.reg.pc += 2;
         word
     }
+
+    fn push_stack(&mut self, val: u16) {
+        self.mmu.write_word(self.reg.sp, val);
+        self.reg.sp = self.reg.sp.wrapping_sub(2);
+    }
+
+    fn pop_stack(&mut self) -> u16 {
+        let result = self.mmu.read_word(self.reg.sp);
+        self.reg.sp = self.reg.sp.wrapping_add(2);
+        result
+    }
 }
