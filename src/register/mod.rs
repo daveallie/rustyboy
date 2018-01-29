@@ -24,12 +24,12 @@ pub struct Registers {
 
 // http://www.z80.info/z80sflag.htm
 pub enum Flags {
-    S  = 0b10000000,
+//    S  = 0b10000000,
     Z  = 0b01000000,
-    F5 = 0b00100000,
+//    F5 = 0b00100000,
     H  = 0b00010000,
-    F3 = 0b00001000,
-    PV = 0b00000100,
+//    F3 = 0b00001000,
+//    PV = 0b00000100,
     N  = 0b00000010,
     C  = 0b00000001,
 }
@@ -67,6 +67,12 @@ impl Registers {
 
     pub fn get_hl(&self) -> u16 {
         self.get_unioned_address(self.h, self.l)
+    }
+
+    pub fn get_hl_and_dec(&mut self) -> u16 {
+        let result = self.get_hl();
+        self.set_hl(result.wrapping_sub(1));
+        result
     }
 
     pub fn get_flag(&mut self, flag: Flags) -> bool {

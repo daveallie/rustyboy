@@ -7,8 +7,8 @@ impl Registers {
         self.set_flag(Flags::H, (input & 0x0F) + 1 == 0x10);
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::N, false);
-        self.set_flag(Flags::S, result & 0x40 > 0); // MSB is non-zero
-        self.set_flag(Flags::PV, input == 0xFF); // Overflow occurred
+//        self.set_flag(Flags::S, result & 0x40 > 0); // MSB is non-zero
+//        self.set_flag(Flags::PV, input == 0xFF); // Overflow occurred
         result
     }
 
@@ -17,8 +17,8 @@ impl Registers {
         self.set_flag(Flags::H, (input & 0x0F) == 0);
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::N, true);
-        self.set_flag(Flags::S, result & 0x40 > 0); // MSB is non-zero
-        self.set_flag(Flags::PV, input == 0x00); // Overflow occurred
+//        self.set_flag(Flags::S, result & 0x40 > 0); // MSB is non-zero
+//        self.set_flag(Flags::PV, input == 0x00); // Overflow occurred
         result
     }
 
@@ -28,8 +28,8 @@ impl Registers {
         self.set_flag(Flags::C, false);
         self.set_flag(Flags::H, false);
         self.set_flag(Flags::N, false);
-        self.set_flag(Flags::S, result & 0x40 > 0); // MSB is non-zero
-        self.set_flag(Flags::PV, false);
+//        self.set_flag(Flags::S, result & 0x40 > 0); // MSB is non-zero
+//        self.set_flag(Flags::PV, false);
         self.a = result;
     }
 }
