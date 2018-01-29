@@ -104,6 +104,11 @@ impl CPU {
                 self.mmu.write_byte(addr, read_regs.a);
                 3
             }
+            0xF0 => {
+                let addr = 0xFF00 | self.get_byte() as u16;
+                self.reg.a = self.mmu.read_byte(addr);
+                3
+            }
             0xF3 => {
                 self.disable_interrupt = 2;
                 1
@@ -111,6 +116,11 @@ impl CPU {
             0xF9 => { // Load hl into stack pointer
                 self.reg.sp = self.reg.get_hl();
                 1
+            }
+            0xFE => {
+                let input = self.get_byte();
+                self.reg.alu_cp(input);
+                2
             }
             _ => {
                 panic!("unknown op code 0x{:X}", code)

@@ -42,6 +42,5 @@ impl Serial {
     fn write_control(&mut self, value: u8) {
         self.control = value;
         // TODO: Implement
-        panic!("serial write_control not yet implemented!");
     }
 }
