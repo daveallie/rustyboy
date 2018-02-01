@@ -19,12 +19,12 @@ impl CPU {
             }
             0x02 => { // write a into location pointed by bc
                 self.mmu.write_byte(self.reg.get_bc(), read_regs.a);
-                1
+                2
             }
             0x03 => { // inc bc
                 let value = self.reg.get_bc().wrapping_add(1);
                 self.reg.set_bc(value);
-                1
+                2
             }
             0x04 => { // inc b
                 self.reg.b = self.reg.alu_inc(read_regs.b);
@@ -71,7 +71,7 @@ impl CPU {
             0x36 => { // load byte into location pointed by hl
                 let value = self.get_byte();
                 self.mmu.write_byte(self.reg.get_hl(), value);
-                2
+                3
             }
             0x3E => { // load byte into a
                 self.reg.a = self.get_byte();
@@ -113,7 +113,7 @@ impl CPU {
             }
             0xF9 => { // Load hl into stack pointer
                 self.reg.sp = self.reg.get_hl();
-                1
+                2
             }
             0xFE => {
                 let input = self.get_byte();
