@@ -1,5 +1,5 @@
 pub struct GPU {
-    OAM: [u8; 160], // Sprite attribute table
+    oam: [u8; 160], // Sprite attribute table
     lcd_control: u8,
     stat: u8,
     scy: u8,
@@ -10,7 +10,7 @@ pub struct GPU {
 impl GPU {
     pub fn new() -> GPU {
         GPU {
-            OAM: [0u8; 160],
+            oam: [0u8; 160],
             lcd_control: 0,
             stat: 0,
             scy: 0,
@@ -20,7 +20,7 @@ impl GPU {
     }
 
     pub fn read_oam(&self, addr: u16) -> u8 {
-        self.OAM[(addr & 0xFF) as usize]
+        self.oam[(addr & 0xFF) as usize]
     }
 
     pub fn read_control(&mut self, addr: u16) -> u8 {

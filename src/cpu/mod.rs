@@ -1,18 +1,21 @@
+use register;
+use mmu;
+
 mod ops;
 
 const CLOCK_SPEED: f64 = 4194304f64;
 
 pub struct CPU {
-    reg: ::register::Registers,
-    mmu: ::mmu::MMU,
+    reg: register::Registers,
+    mmu: mmu::MMU,
     disable_interrupt: u32,
 }
 
 impl CPU {
     pub fn new(cart_path: &str) -> CPU {
         CPU {
-            reg: ::register::Registers::new(),
-            mmu: ::mmu::MMU::new(cart_path),
+            reg: register::Registers::new(),
+            mmu: mmu::MMU::new(cart_path),
             disable_interrupt: 0,
         }
     }
