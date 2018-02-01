@@ -8,8 +8,6 @@ impl CPU {
 
         println!("instr: 0x{:X} -- opcode: 0x{:X}", read_regs.pc, code);
 
-        // http://clrhome.org/table/
-        // http://gbdev.gg8.se/wiki/articles/CPU_Comparision_with_Z80
         match code {
             0x00 => { // nop
                 1
