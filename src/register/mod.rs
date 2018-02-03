@@ -65,6 +65,12 @@ impl Registers {
         self.get_unioned_address(self.h, self.l)
     }
 
+    pub fn get_hl_and_inc(&mut self) -> u16 {
+        let result = self.get_hl();
+        self.set_hl(result.wrapping_add(1));
+        result
+    }
+
     pub fn get_hl_and_dec(&mut self) -> u16 {
         let result = self.get_hl();
         self.set_hl(result.wrapping_sub(1));

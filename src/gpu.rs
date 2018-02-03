@@ -33,6 +33,10 @@ impl GPU {
         self.oam[(addr & 0xFF) as usize]
     }
 
+    pub fn write_oam(&mut self, addr: u16, value: u8) {
+        self.oam[(addr & 0xFF) as usize] = value;
+    }
+
     pub fn read_video_ram(&self, addr: u16) -> u8 {
         self.video_ram[(addr & 0x1FFF) as usize]
     }

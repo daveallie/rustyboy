@@ -48,7 +48,7 @@ impl MMU {
             0xFF10...0xFF26 => 0, // Sound control
             0xFF30...0xFF3F => 0, // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.read_control(addr),
-            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
+//            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (read) (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
             0xFF80...0xFFFF => self.zram[(addr & 0x7F) as usize], // Zero page RAM
             _ => 0,
         }
@@ -63,9 +63,9 @@ impl MMU {
         match addr {
             0x0000...0x7FFF => self.rom[addr as usize] = value, // ROM
             0x8000...0x9FFF => self.gpu.write_video_ram(addr, value), // Write to GPU
-            0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Load from cartridge RAM
+            0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Write to cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize] = value, // Working RAM
-            0xFE00...0xFE9F => panic!("MMU ERROR: Write graphics sprite information not implemented"), // Graphics - sprite information
+            0xFE00...0xFE9F => self.gpu.write_oam(addr, value), // Graphics - sprite information
             0xFF00 => (), // Input write
             0xFF01...0xFF02 => self.serial.write(addr, value), // Serial write
             0xFF04 => (), // Div register
@@ -74,7 +74,7 @@ impl MMU {
             0xFF10...0xFF26 => (), // Sound control
             0xFF30...0xFF3F => (), // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.write_control(addr, value),
-            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
+//            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
             0xFF80...0xFFFF => self.zram[(addr & 0x7F) as usize] = value, // Zero page RAM
             _ => (),
         }
