@@ -24,14 +24,10 @@ pub struct Registers {
 
 // http://www.z80.info/z80sflag.htm
 pub enum Flags {
-//    S  = 0b10000000,
-    Z  = 0b01000000,
-//    F5 = 0b00100000,
-    H  = 0b00010000,
-//    F3 = 0b00001000,
-//    PV = 0b00000100,
-    N  = 0b00000010,
-    C  = 0b00000001,
+    Z = 0b10000000,
+    N = 0b01000000,
+    H = 0b00100000,
+    C = 0b00010000,
 }
 
 impl Registers {
@@ -75,7 +71,7 @@ impl Registers {
         result
     }
 
-    pub fn get_flag(&mut self, flag: Flags) -> bool {
+    pub fn get_flag(&self, flag: Flags) -> bool {
         let flag_byte = flag as u8;
         self.f & flag_byte > 0
     }
