@@ -1,3 +1,7 @@
+use std::sync::mpsc;
+use screen;
+use rand::{self, Rng};
+
 const VIDEO_RAM_SIZE: usize = 0x2000;
 
 pub struct GPU {
@@ -12,10 +16,11 @@ pub struct GPU {
     scx: u8,
     ly: u8,
     render_clock: u32,
+    screen_data_sender: mpsc::SyncSender<Vec<u8>>,
 }
 
 impl GPU {
-    pub fn new() -> GPU {
+    pub fn new(screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> GPU {
         GPU {
             video_ram: [0u8; VIDEO_RAM_SIZE],
             bg_palette: 0,
@@ -28,6 +33,7 @@ impl GPU {
             scx: 0,
             ly: 0,
             render_clock: 0,
+            screen_data_sender,
         }
     }
 
@@ -105,8 +111,24 @@ impl GPU {
 
     fn increment_line(&mut self) {
         self.ly = (self.ly + 1) % 154;
-//        if self.ly >= 144 { // V-Blank
-//
-//        }
+        if self.ly >= 144 { // V-Blank
+            self.render_random();
+        }
+    }
+
+    pub fn render_random(&self) {
+        let mut rng = rand::thread_rng();
+        let datavec: Vec<u8> = (0..(screen::Screen::WIDTH * screen::Screen::HEIGHT)).flat_map(|_i| {
+            let col = match rng.gen_range(0, 4) {
+                0 => 255,
+                1 => 192,
+                2 => 96,
+                _ => 0,
+            };
+
+            vec![col, col, col]
+        }).collect();
+
+        self.screen_data_sender.send(datavec).unwrap();
     }
 }

@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Read;
+use std::sync::mpsc;
 use gpu::GPU;
 use serial::Serial;
 
@@ -19,7 +20,7 @@ pub struct MMU {
 }
 
 impl MMU {
-    pub fn new(cart_path: &str) -> MMU {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> MMU {
         let mut cart_data: Vec<u8> = Vec::new();
         MMU::load_cart(&cart_path, &mut cart_data);
 
@@ -27,7 +28,7 @@ impl MMU {
             rom: cart_data,
             wram: [0u8; WRAM_SIZE],
             zram: [0u8; ZRAM_SIZE],
-            gpu: GPU::new(),
+            gpu: GPU::new(screen_data_sender),
             serial: Serial::new(),
         }
     }

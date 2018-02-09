@@ -1,19 +1,20 @@
 use std::borrow::Cow;
 use glium::{self, glutin, texture, Surface};
-use rand::{self, Rng};
+use std::sync::mpsc;
 
 pub struct Screen {
     display: glium::Display,
     texture: texture::texture2d::Texture2d,
     events_loop: glutin::EventsLoop,
+    screen_data_receiver: mpsc::Receiver<Vec<u8>>,
 }
 
 impl Screen {
-    const WIDTH: u32 = 160;
-    const HEIGHT: u32 = 144;
+    pub const WIDTH: u32 = 160;
+    pub const HEIGHT: u32 = 144;
 
-    pub fn new(title: &str, scale: u32) -> Screen {
-        let mut events_loop = glutin::EventsLoop::new();
+    pub fn new(title: &str, scale: u32, screen_data_receiver: mpsc::Receiver<Vec<u8>>) -> Screen {
+        let events_loop = glutin::EventsLoop::new();
         let window = glutin::WindowBuilder::new()
             .with_title(title)
             .with_dimensions(Screen::WIDTH * scale, Screen::HEIGHT * scale);
@@ -26,35 +27,14 @@ impl Screen {
             display,
             texture,
             events_loop,
+            screen_data_receiver,
         }
     }
 
-    pub fn render(&mut self, data: u8) {
-
-    }
-
-    pub fn test_render(&mut self) {
-        let scale = 4;
-
-
+    pub fn start_loop(&mut self) {
         let mut closed = false;
 
-        let mut rng = rand::thread_rng();
-
         while !closed {
-            let mut datavec: Vec<u8> = (0..(Screen::WIDTH * Screen::HEIGHT)).flat_map(|i| {
-                let col = match rng.gen_range(0, 4) {
-                    0 => 255,
-                    1 => 192,
-                    2 => 96,
-                    _ => 0,
-                };
-
-                vec![col, col, col]
-            }).collect();
-
-            self.draw_data(datavec.as_mut_slice());
-
             // listing the events produced by application and waiting to be received
             self.events_loop.poll_events(|ev| {
                 match ev {
@@ -65,14 +45,20 @@ impl Screen {
                     _ => (),
                 }
             });
+
+            match self.screen_data_receiver.try_recv() {
+                Ok(data) => self.draw_data(&*data),
+                Err(mpsc::TryRecvError::Empty) => (),
+                Err(mpsc::TryRecvError::Disconnected) => closed = true,
+            }
         }
     }
 
     fn draw_data(&mut self, data: &[u8]) {
         let raw_image_2d = glium::texture::RawImage2d {
             data: Cow::Borrowed(data),
-            width: 160,
-            height: 144,
+            width: Screen::WIDTH,
+            height: Screen::HEIGHT,
             format: glium::texture::ClientFormat::U8U8U8,
         };
 

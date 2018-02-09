@@ -1,3 +1,5 @@
+use std::sync::mpsc;
+
 use register;
 use mmu;
 
@@ -12,10 +14,10 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub fn new(cart_path: &str) -> CPU {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> CPU {
         CPU {
             reg: register::Registers::new(),
-            mmu: mmu::MMU::new(cart_path),
+            mmu: mmu::MMU::new(cart_path, screen_data_sender),
             disable_interrupt: 0,
         }
     }
@@ -54,3 +56,15 @@ impl CPU {
         self.reg.pc = ((self.reg.pc as u32 as i32) + (n as i32)) as u16;
     }
 }
+
+//struct Clock {
+//
+//}
+//
+//impl Clock {
+//    fn new() -> Clock {
+//        Clock {
+//            m
+//        }
+//    }
+//}
