@@ -8,3 +8,5 @@ default = []
 debugger = []
 
 [dependencies]
+glium = "*"
+rand = "*"
