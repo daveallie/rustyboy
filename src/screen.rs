@@ -52,9 +52,8 @@ impl Screen {
 
                 vec![col, col, col]
             }).collect();
-            let data = Cow::Borrowed(datavec.as_mut_slice());
 
-            self.draw_data(data);
+            self.draw_data(datavec.as_mut_slice());
 
             // listing the events produced by application and waiting to be received
             self.events_loop.poll_events(|ev| {
@@ -69,9 +68,9 @@ impl Screen {
         }
     }
 
-    fn draw_data(&mut self, data: Cow<[u8]>) {
+    fn draw_data(&mut self, data: &[u8]) {
         let raw_image_2d = glium::texture::RawImage2d {
-            data,
+            data: Cow::Borrowed(data),
             width: 160,
             height: 144,
             format: glium::texture::ClientFormat::U8U8U8,
