@@ -2,7 +2,7 @@ use cpu::CPU;
 use register::Flags;
 
 impl CPU {
-    pub fn step(&mut self) -> u32 {
+    pub fn step(&mut self) -> u8 {
         let read_regs = self.reg;
         let code = self.get_byte();
 

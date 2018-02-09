@@ -11,6 +11,7 @@ pub struct GPU {
     scy: u8,
     scx: u8,
     ly: u8,
+    render_clock: u32,
 }
 
 impl GPU {
@@ -26,6 +27,19 @@ impl GPU {
             scy: 0,
             scx: 0,
             ly: 0,
+            render_clock: 0,
+        }
+    }
+
+    pub fn run_cycle(&mut self, cycles: u8) {
+        if !self.is_lcd_on() {
+            return
+        }
+
+        let mut cycles_to_process = cycles;
+
+        while cycles_to_process > 0 {
+            cycles_to_process -= self.process_cycles(cycles_to_process as u32);
         }
     }
 
@@ -71,5 +85,28 @@ impl GPU {
             0xFF49 => self.obj_palette_1 = value,
             _ => panic!("Unknown GPU control write operation: 0x{:X}", addr),
         }
+    }
+
+    fn is_lcd_on(&self) -> bool {
+        self.lcd_control & 0x80 > 0
+    }
+
+    fn process_cycles(&mut self, cycles: u32) -> u8 {
+        if self.render_clock + cycles >= 114 {
+            let used_cycles = (self.render_clock + cycles - 114) as u8;
+            self.render_clock = 0;
+            self.increment_line();
+            used_cycles
+        } else {
+            self.render_clock += cycles;
+            cycles as u8
+        }
+    }
+
+    fn increment_line(&mut self) {
+        self.ly = (self.ly + 1) % 154;
+//        if self.ly >= 144 { // V-Blank
+//
+//        }
     }
 }

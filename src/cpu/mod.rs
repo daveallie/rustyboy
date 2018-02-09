@@ -20,6 +20,12 @@ impl CPU {
         }
     }
 
+    pub fn run_cycle(&mut self) -> u8 {
+        let cycles = self.step();
+        self.mmu.run_cycle(cycles);
+        cycles
+    }
+
     fn get_byte(&mut self) -> u8 {
         let byte = self.mmu.read_byte(self.reg.pc);
         self.reg.pc += 1;

@@ -32,6 +32,10 @@ impl MMU {
         }
     }
 
+    pub fn run_cycle(&mut self, cpu_cycles: u8) {
+        self.gpu.run_cycle(cpu_cycles)
+    }
+
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
     pub fn read_byte(&mut self, addr: u16) -> u8 {
         match addr {

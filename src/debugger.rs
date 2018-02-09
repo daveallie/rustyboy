@@ -4,7 +4,7 @@ use cpu;
 use register::Flags;
 
 pub struct Debugger {
-    current_cycles: u32,
+    current_steps: u32,
     debugging: bool,
     debug_after_cycles_enabled: bool,
     debug_after_cycles: u32,
@@ -20,7 +20,7 @@ struct RegBreakPoint {
 impl Debugger {
     pub fn new(debug_after_cycles: Option<u32>, cpu: cpu::CPU) -> Debugger {
         Debugger {
-            current_cycles: 0,
+            current_steps: 0,
             debugging: false,
             debug_after_cycles_enabled: debug_after_cycles.is_some(),
             debug_after_cycles: debug_after_cycles.unwrap_or(0),
@@ -31,7 +31,8 @@ impl Debugger {
 
     pub fn run(&mut self) {
         loop {
-            self.current_cycles += self.cpu.step();
+            self.cpu.run_cycle();
+            self.current_steps += 1;
             if self.should_stop() {
                 self.debug();
             }
@@ -63,7 +64,7 @@ impl Debugger {
             }
         }
 
-        self.debug_after_cycles_enabled && self.current_cycles >= self.debug_after_cycles
+        self.debug_after_cycles_enabled && self.current_steps >= self.debug_after_cycles
     }
 
     fn debug(&mut self) {
@@ -83,7 +84,7 @@ impl Debugger {
             },
             Some("n") | Some("next") => {
                 let jump = read_num(words.next().unwrap_or("0"));
-                self.debug_after_cycles = self.current_cycles + jump;
+                self.debug_after_cycles = self.current_steps + jump;
                 self.debugging = false;
             },
             Some("bo") | Some("breakon") => {

@@ -18,7 +18,7 @@ fn main() {
 #[cfg(not(feature = "debugger"))]
 fn run(mut cpu: cpu::CPU) {
     loop {
-        cpu.step();
+        cpu.run_cycle();
     }
 }
 
