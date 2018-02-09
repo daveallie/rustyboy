@@ -17,7 +17,7 @@ fn main() {
     let mut cpu = cpu::CPU::new(&cart_path);
 
 //    run(cpu);
-    screen::Screen::test_render();
+    screen::Screen::new("Rustyboy", 4).test_render();
 }
 
 #[cfg(not(feature = "debugger"))]
