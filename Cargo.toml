@@ -10,3 +10,4 @@ debugger = []
 [dependencies]
 glium = "*"
 rand = "*"
+clippy = { version = "*", optional = true }
