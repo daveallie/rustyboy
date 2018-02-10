@@ -116,7 +116,7 @@ impl CPU {
                 1
             }
             0x7F => { // load a into a
-                // self.reg.a = self.reg.a;
+                self.reg.a = self.reg.a;
                 1
             }
             0xEA => { // load a into into location pointed by next word
@@ -212,17 +212,17 @@ impl CPU {
                 6
             }
             0xE0 => { // store a into (0xFF00 | next byte)
-                let addr = 0xFF00 | self.get_byte() as u16;
+                let addr = 0xFF00 | u16::from(self.get_byte());
                 self.mmu.write_byte(addr, read_regs.a);
                 3
             }
             0xE2 => { // store a into (0xFF00 | C)
-                let addr = 0xFF00 | self.reg.c as u16;
+                let addr = 0xFF00 | u16::from(self.reg.c);
                 self.mmu.write_byte(addr, read_regs.a);
                 2
             }
             0xF0 => {
-                let addr = 0xFF00 | self.get_byte() as u16;
+                let addr = 0xFF00 | u16::from(self.get_byte());
                 self.reg.a = self.mmu.read_byte(addr);
                 3
             }

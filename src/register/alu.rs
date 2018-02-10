@@ -12,7 +12,7 @@ impl Registers {
 
     pub fn alu_dec(&mut self, input: u8) -> u8 {
         let result = input.wrapping_sub(1);
-        self.set_flag(Flags::H, (input & 0x0F) == 0);
+        self.set_flag(Flags::H, input.trailing_zeros() >= 4);
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::N, true);
         result
@@ -31,7 +31,7 @@ impl Registers {
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::H, (a & 0x0F) < (input & 0x0F) + carry);
         self.set_flag(Flags::N, true);
-        self.set_flag(Flags::C, (a as u16) < (input as u16) + (carry as u16));
+        self.set_flag(Flags::C, u16::from(a) < u16::from(input) + u16::from(carry));
         self.a = result;
     }
 

@@ -1,7 +1,10 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", deny(clippy_pedantic))]
-#![cfg_attr(feature="clippy", allow(missing_docs_in_private_items))]
+#![cfg_attr(feature="clippy", allow(missing_docs_in_private_items,cast_possible_truncation))]
+
+// until I have logging
+#![cfg_attr(feature="clippy", allow(print_stdout))]
 
 #![deny(missing_debug_implementations, missing_copy_implementations, trivial_casts, trivial_numeric_casts, unsafe_code, unused_import_braces, unused_qualifications)]
 
@@ -21,7 +24,10 @@ mod serial;
 mod debugger;
 
 fn main() {
-    let cart_path = env::args().nth(1).unwrap();
+    let cart_path = match env::args().nth(1) {
+        Some(v) => v,
+        None => panic!("You must pass a cart path as the first argument!")
+    };
 
     let (screen_data_sender, screen_data_receiver) = mpsc::sync_channel(1);
 
@@ -40,7 +46,9 @@ fn run(mut cpu: cpu::CPU, mut screen: screen::Screen) {
     });
 
     screen.start_loop();
-    cpu_thread.join().unwrap();
+    if let Err(e) = cpu_thread.join() {
+        panic!("Error: Failed to join CPU thread: {:?}", e);
+    }
 }
 
 #[cfg(feature = "debugger")]

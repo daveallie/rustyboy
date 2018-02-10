@@ -20,13 +20,13 @@ pub struct GPU {
 }
 
 impl GPU {
-    pub fn new(screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> GPU {
-        GPU {
-            video_ram: [0u8; VIDEO_RAM_SIZE],
+    pub fn new(screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
+        Self {
+            video_ram: [0_u8; VIDEO_RAM_SIZE],
             bg_palette: 0,
             obj_palette_0: 0,
             obj_palette_1: 0,
-            oam: [0u8; 160],
+            oam: [0_u8; 160],
             lcd_control: 0x91,
             stat: 0,
             scy: 0,
@@ -45,7 +45,7 @@ impl GPU {
         let mut cycles_to_process = cycles;
 
         while cycles_to_process > 0 {
-            cycles_to_process -= self.process_cycles(cycles_to_process as u32);
+            cycles_to_process -= self.process_cycles(u32::from(cycles_to_process));
         }
     }
 
@@ -129,6 +129,9 @@ impl GPU {
             vec![col, col, col]
         }).collect();
 
-        self.screen_data_sender.send(datavec).unwrap();
+        match self.screen_data_sender.send(datavec) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to send screen data: {}", e),
+        };
     }
 }

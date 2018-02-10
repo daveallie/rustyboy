@@ -5,7 +5,7 @@ use mmu;
 
 mod ops;
 
-const CLOCK_SPEED: f64 = 4194304f64;
+//const CLOCK_SPEED: f64 = 4_194_304_f64;
 
 pub struct CPU {
     reg: register::Registers,
@@ -14,8 +14,8 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> CPU {
-        CPU {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
+        Self {
             reg: register::Registers::new(),
             mmu: mmu::MMU::new(cart_path, screen_data_sender),
             disable_interrupt: 0,
@@ -45,15 +45,15 @@ impl CPU {
         self.reg.sp = self.reg.sp.wrapping_sub(2);
     }
 
-    fn pop_stack(&mut self) -> u16 {
-        let result = self.mmu.read_word(self.reg.sp);
-        self.reg.sp = self.reg.sp.wrapping_add(2);
-        result
-    }
+//    fn pop_stack(&mut self) -> u16 {
+//        let result = self.mmu.read_word(self.reg.sp);
+//        self.reg.sp = self.reg.sp.wrapping_add(2);
+//        result
+//    }
 
     fn jr(&mut self) {
         let n = self.get_byte() as i8;
-        self.reg.pc = ((self.reg.pc as u32 as i32) + (n as i32)) as u16;
+        self.reg.pc = (u32::from(self.reg.pc) as i32 + i32::from(n)) as u16;
     }
 }
 

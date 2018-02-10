@@ -24,16 +24,16 @@ pub struct Registers {
 
 // http://www.z80.info/z80sflag.htm
 pub enum Flags {
-    Z = 0b10000000,
-    N = 0b01000000,
-    H = 0b00100000,
-    C = 0b00010000,
+    Z = 0b1000_0000,
+    N = 0b0100_0000,
+    H = 0b0010_0000,
+    C = 0b0001_0000,
 }
 
 impl Registers {
-    pub fn new() -> Registers {
+    pub fn new() -> Self {
         // Set register values as expected after boot sequence
-        Registers {
+        Self {
             a: 0x01,
             b: 0x00,
             c: 0x13,
@@ -83,14 +83,15 @@ impl Registers {
     }
 
     fn get_unioned_address(&self, addr1: u8, addr2: u8) -> u16 {
-        (addr1 as u16) << 8 | (addr2 as u16)
+        u16::from(addr1) << 8 | u16::from(addr2)
     }
 
     fn set_flag(&mut self, flag: Flags, flagged: bool) {
         let flag_byte = flag as u8;
-        match flagged {
-            true => self.f |= flag_byte,
-            false => self.f = self.f & !flag_byte & 0xF0,
+        if flagged {
+            self.f |= flag_byte;
+        } else {
+            self.f = self.f & !flag_byte & 0xF0;
         }
     }
 }

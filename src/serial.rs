@@ -4,8 +4,8 @@ pub struct Serial {
 }
 
 impl Serial {
-    pub fn new() -> Serial {
-        Serial {
+    pub fn new() -> Self {
+        Self {
             data: 0,
             control: 0,
         }
