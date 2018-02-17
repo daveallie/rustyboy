@@ -132,7 +132,6 @@ impl GPU {
         let bgy_pixel_in_tile = bgy as u16 & 0x07;
 
         for x in 0 .. (screen::Screen::WIDTH as usize) {
-            println!("LINE: {} ROW: {}", self.ly, x);
             let bgx = self.scx as u32 + x as u32;
             let bgx_tile = (bgx as u16 >> 3) & 31;
             let bgx_pixel_in_tile = bgx as u8 & 0x07;
@@ -145,7 +144,7 @@ impl GPU {
                 bg_tile_data_addr + (tile_number as u16 * 16)
             } else {
                 // reading with offset
-                panic!("Tile address resolution not yet completely implemented")
+                bg_tile_data_addr + ((tile_number as i8 as i16 + 128) as u16 * 16)
             };
 
             let tile_line_addr = bgy_pixel_in_tile * 2;
@@ -188,7 +187,7 @@ impl GPU {
         let base_addr = (self.ly as usize * screen::Screen::WIDTH as usize + x_pixel) * 3;
         self.next_screen_buffer[base_addr] = color;
         self.next_screen_buffer[base_addr + 1] = color;
-        self.next_screen_buffer[base_addr + 1] = color;
+        self.next_screen_buffer[base_addr + 2] = color;
     }
 
     pub fn render_screen(&self) {
