@@ -45,9 +45,7 @@ fn main() {
 #[cfg(not(feature = "debugger"))]
 fn run(mut cpu: CPU, mut screen: Screen) {
     let cpu_thread = thread::spawn(move || {
-        loop {
-            cpu.run_cycle();
-        }
+        cpu.main_loop();
     });
 
     screen.start_loop();

@@ -11,10 +11,11 @@ pub struct Clock {
 }
 
 impl Clock {
-    const DIVIDER_INC_SPEED: u32 = 16_384_u32;
+    const DIVIDER_INC_SPEED: u32 = 0x4000_u32;
+    const DIVIDER_TIMER_LIMIT: u32 = CPU::CYCLE_SPEED / Self::DIVIDER_INC_SPEED;
 
-    pub fn new() -> Clock {
-        Clock {
+    pub fn new() -> Self {
+        Self {
             divider: 0,
             divider_increment_timer: 0,
             counter: 0,
@@ -27,10 +28,9 @@ impl Clock {
 
     pub fn run_cycle(&mut self, cpu_cycles: u8) {
         self.divider_increment_timer += u32::from(cpu_cycles);
-        let divider_timer_limit = CPU::CYCLE_SPEED / Self::DIVIDER_INC_SPEED;
-        if self.divider_increment_timer >= divider_timer_limit {
+        if self.divider_increment_timer >= Self::DIVIDER_TIMER_LIMIT {
             self.divider.wrapping_add(1);
-            self.divider_increment_timer -= divider_timer_limit;
+            self.divider_increment_timer -= Self::DIVIDER_TIMER_LIMIT;
         }
 
         if self.counter_stopped() {
@@ -75,10 +75,10 @@ impl Clock {
 
     fn counter_speed(&self) -> u32 {
         match self.control & 0x03 {
-            0x00 => 4_096,
-            0x01 => 262_144,
-            0x02 => 65_536,
-            _ => 16_384,
+            0x00 => 0x1_000,
+            0x01 => 0x40_000,
+            0x02 => 0x10_000,
+            _ => 0x4_000,
         }
     }
 }

@@ -1,12 +1,13 @@
-use std::sync::mpsc;
+mod ops;
 
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
 use register;
 use mmu;
 
-mod ops;
-
 pub struct CPU {
-    reg: register::Registers,
+    pub reg: register::Registers,
     pub mmu: mmu::MMU,
     disable_interrupt_after: u8,
     enable_interrupt_after: u8,
@@ -15,7 +16,7 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub const CLOCK_SPEED: u32 = 4_194_304_u32;
+    pub const CLOCK_SPEED: u32 = 0x400_000_u32;
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4;
 
     pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
@@ -26,6 +27,21 @@ impl CPU {
             enable_interrupt_after: 0,
             interrupts_enabled: true,
             halting: false,
+        }
+    }
+
+    pub fn main_loop(&mut self) {
+        let mut time_before_run: Instant;
+        let mut time_of_next_run: Instant = Instant::now();
+        loop {
+            time_before_run = Instant::now();
+            if time_before_run < time_of_next_run {
+                thread::sleep(time_of_next_run - time_before_run);
+                time_before_run = Instant::now();
+            }
+            let completed_cycles = self.run_cycle();
+            let time_until_next_run = Duration::new(0,  (1_000_000_000_f64 * f64::from(completed_cycles) / f64::from(Self::CLOCK_SPEED)) as u32);
+            time_of_next_run = time_before_run + time_until_next_run;
         }
     }
 
