@@ -40,6 +40,7 @@ impl MMU {
     pub fn run_cycle(&mut self, cpu_cycles: u8) {
         self.gpu.run_cycle(cpu_cycles);
         self.interrupt_flags |= self.gpu.interrupt;
+        self.gpu.interrupt = 0;
     }
 
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
