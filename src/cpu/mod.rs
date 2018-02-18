@@ -40,6 +40,7 @@ impl CPU {
                 time_before_run = Instant::now();
             }
             let completed_cycles = self.run_cycle();
+            #[cfg_attr(feature="clippy", allow(cast_possible_truncation, cast_sign_loss))]
             let time_until_next_run = Duration::new(0,  (1_000_000_000_f64 * f64::from(completed_cycles) / f64::from(Self::CLOCK_SPEED)) as u32);
             time_of_next_run = time_before_run + time_until_next_run;
         }
@@ -137,7 +138,10 @@ impl CPU {
 //    }
 
     fn jr(&mut self) {
+        #[cfg_attr(feature="clippy", allow(cast_possible_wrap))]
         let n = self.get_byte() as i8;
-        self.reg.pc = (u32::from(self.reg.pc) as i32 + i32::from(n)) as u16;
+        #[cfg_attr(feature="clippy", allow(cast_possible_wrap, cast_possible_truncation, cast_sign_loss))]
+        let new_pc = (u32::from(self.reg.pc) as i32 + i32::from(n)) as u16;
+        self.reg.pc = new_pc;
     }
 }

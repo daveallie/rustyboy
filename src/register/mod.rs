@@ -48,8 +48,13 @@ impl Registers {
     }
 
     pub fn set_bc(&mut self, value: u16) {
-        self.b = (value >> 8) as u8;     // first byte
-        self.c = (value & 0x00FF) as u8; // second byte
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let first_byte = (value >> 8) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let second_byte = (value & 0x00FF) as u8;
+
+        self.b = first_byte;
+        self.c = second_byte;
     }
 
     pub fn get_bc(&self) -> u16 {
@@ -57,8 +62,13 @@ impl Registers {
     }
 
     pub fn set_hl(&mut self, value: u16) {
-        self.h = (value >> 8) as u8;     // first byte
-        self.l = (value & 0x00FF) as u8; // second byte
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let first_byte = (value >> 8) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let second_byte = (value & 0x00FF) as u8;
+
+        self.h = first_byte;
+        self.l = second_byte;
     }
 
     pub fn get_hl(&self) -> u16 {

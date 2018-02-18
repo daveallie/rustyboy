@@ -104,6 +104,7 @@ impl GPU {
 
     fn process_cycles(&mut self, cycles: u32) -> u8 {
         if self.render_clock + cycles >= 114 {
+            #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
             let used_cycles = (self.render_clock + cycles - 114) as u8;
             self.render_clock = 0;
             self.increment_line();
@@ -111,7 +112,9 @@ impl GPU {
             used_cycles
         } else {
             self.render_clock += cycles;
-            cycles as u8
+            #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+            let cycles_u8 = cycles as u8;
+            cycles_u8
         }
     }
 
@@ -137,24 +140,29 @@ impl GPU {
         let bg_tile_map_addr = self.bg_tile_map_addr();
         let bg_tile_data_addr = self.bg_tile_data_addr();
         let bgy = self.scy.wrapping_add(self.ly);
-        let bgy_tile = (u16::from(bgy) >> 3) & 31;
+        let bgy_tile = (u16::from(bgy) & 0xFF) >> 3;
         let bgy_pixel_in_tile = u16::from(bgy) & 0x07;
 
-        for x in 0 .. (Screen::WIDTH as usize) {
-            let bgx = u32::from(self.scx) + x as u32;
-            let bgx_tile = (bgx as u16 >> 3) & 31;
-            let bgx_pixel_in_tile = bgx as u8 & 0x07;
+        for x in 0 .. Screen::WIDTH {
+            let bgx = u32::from(self.scx) + x;
+            #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+            let bgx_tile = ((bgx & 0xFF) >> 3) as u16;
+            #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+            let bgx_pixel_in_tile = (bgx & 0x07) as u8;
 
             let tile_number_addr = bg_tile_map_addr + bgy_tile * 32 + bgx_tile;
             let tile_number: u8 = self.read_byte_video_ram(tile_number_addr);
 
-            let tile_addr = if bg_tile_data_addr == 0x8000 {
+            let tile_addr_offset = if bg_tile_data_addr == 0x8000 {
                 // regular reading
-                bg_tile_data_addr + u16::from(tile_number) * 16
+                u16::from(tile_number) * 16
             } else {
                 // reading with offset
-                bg_tile_data_addr + (i16::from(tile_number as i8) + 128) as u16 * 16
+                #[cfg_attr(feature="clippy", allow(cast_possible_truncation, cast_sign_loss, cast_possible_wrap))]
+                let adjusted_tile_number = (i16::from(tile_number as i8) + 128) as u16;
+                adjusted_tile_number * 16
             };
+            let tile_addr = bg_tile_data_addr + tile_addr_offset;
 
             let tile_line_addr = tile_addr + bgy_pixel_in_tile * 2;
             let (tile_line_data_1, tile_line_data_2) = (self.read_byte_video_ram(tile_line_addr), self.read_byte_video_ram(tile_line_addr + 1));
@@ -192,8 +200,8 @@ impl GPU {
         }
     }
 
-    fn set_pixel_color_next_screen_buffer(&mut self, x_pixel: usize, color: u8) {
-        let base_addr = (self.ly as usize * Screen::WIDTH as usize + x_pixel) * 3;
+    fn set_pixel_color_next_screen_buffer(&mut self, x_pixel: u32, color: u8) {
+        let base_addr = (u32::from(self.ly) * Screen::WIDTH + x_pixel) as usize * 3;
         self.next_screen_buffer[base_addr] = color;
         self.next_screen_buffer[base_addr + 1] = color;
         self.next_screen_buffer[base_addr + 2] = color;

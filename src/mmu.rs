@@ -91,7 +91,7 @@ impl MMU {
 //            0xFF10...0xFF26 => (), // Sound control
 //            0xFF30...0xFF3F => (), // Sound wave pattern RAM
             0xFF46 => self.dma_into_oam(value),
-            0xFF40...0xFF4B => self.gpu.write_control(addr, value),
+            0xFF40...0xFF45 | 0xFF47...0xFF4B => self.gpu.write_control(addr, value),
 //            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}", addr), // Memory mapped I/O CGB ONLY
             0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize] = value, // High RAM
             0xFFFF => self.interrupt_enabled = value, // Interrupt enable
@@ -100,7 +100,9 @@ impl MMU {
     }
 
     pub fn write_word(&mut self, addr: u16, value: u16) {
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         self.write_byte(addr, (value & 0xFF) as u8);
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         self.write_byte(addr + 1, (value >> 8) as u8);
     }
 
@@ -115,6 +117,7 @@ impl MMU {
     fn dma_into_oam(&mut self, dma_start: u8) {
         // DMA start can be addressed as 0x0000, 0x0100, 0x0200, etc
         let actual_dma_start = u16::from(dma_start) << 8; // turns 0x01 to 0x0100
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         for i in 0..(GPU::OAM_SIZE as u16) {
             let value = self.read_byte(actual_dma_start + i);
             self.gpu.write_oam(i, value);

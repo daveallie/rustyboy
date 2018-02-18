@@ -73,7 +73,9 @@ impl Screen {
         let (unsigned_width, unsigned_height) = target.get_dimensions();
         // I have no idea why I need to double the width and height, only renders to quarter of window otherwise
         // Could be to do with my machine?
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         let width = 2 * i32::from(unsigned_width as u16);
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         let height = 2 * i32::from(unsigned_height as u16);
         let blit_target = glium::BlitTarget { left: 0, bottom: 0, width, height };
         self.texture.as_surface().blit_whole_color_to(&target, &blit_target, glium::uniforms::MagnifySamplerFilter::Nearest);
