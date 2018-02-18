@@ -19,12 +19,11 @@ impl CPU {
                 3
             }
             0x02 => { // write a into location pointed by bc
-                self.mmu.write_byte(self.reg.get_bc(), read_regs.a);
+                self.mmu.write_byte(read_regs.get_bc(), read_regs.a);
                 2
             }
             0x03 => { // inc bc
-                let value = self.reg.get_bc().wrapping_add(1);
-                self.reg.set_bc(value);
+                self.reg.set_bc(read_regs.get_bc().wrapping_add(1));
                 2
             }
             0x04 => { // inc b
@@ -40,8 +39,7 @@ impl CPU {
                 2
             }
             0x0B => { // dec bc
-                let value = self.reg.get_bc().wrapping_sub(1);
-                self.reg.set_bc(value);
+                self.reg.set_bc(read_regs.get_bc().wrapping_sub(1));
                 2
             }
             0x0C => { // inc c
@@ -57,7 +55,7 @@ impl CPU {
                 2
             }
             0x20 => { // JR * if Z is reset
-                if self.reg.get_flag(Flags::Z) {
+                if read_regs.get_flag(Flags::Z) {
                     self.reg.pc += 1; // Skip jump destination byte
                     2
                 } else {
@@ -75,7 +73,7 @@ impl CPU {
                 2
             }
             0x2A => { // load value at hl address into a. inc hl
-                self.mmu.write_byte(self.reg.get_hl_and_inc(), read_regs.a);
+                self.reg.a = self.mmu.read_byte(self.reg.get_hl_and_inc());
                 2
             }
             0x2C => { // inc l
@@ -93,7 +91,7 @@ impl CPU {
             }
             0x36 => { // load byte into location pointed by hl
                 let value = self.get_byte();
-                self.mmu.write_byte(self.reg.get_hl(), value);
+                self.mmu.write_byte(read_regs.get_hl(), value);
                 3
             }
             0x76 => { // halt
@@ -230,7 +228,7 @@ impl CPU {
                 3
             }
             0xE2 => { // store a into (0xFF00 | C)
-                let addr = 0xFF00 | u16::from(self.reg.c);
+                let addr = 0xFF00 | u16::from(read_regs.c);
                 self.mmu.write_byte(addr, read_regs.a);
                 2
             }
@@ -244,7 +242,7 @@ impl CPU {
                 1
             }
             0xF9 => { // Load hl into stack pointer
-                self.reg.sp = self.reg.get_hl();
+                self.reg.sp = read_regs.get_hl();
                 2
             }
             0xFB => { // enable interrupts after following cpu instruction
