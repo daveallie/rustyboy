@@ -11,6 +11,7 @@
 extern crate glium;
 extern crate rand;
 
+mod clock;
 mod cpu;
 mod gpu;
 mod mmu;

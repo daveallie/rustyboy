@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
+use clock::Clock;
 use gpu::GPU;
 use serial::Serial;
 
@@ -17,6 +18,7 @@ pub struct MMU {
     hram: [u8; HRAM_SIZE], // High RAM
     gpu: GPU,
     serial: Serial,
+    clock: Clock,
     interrupt_flags: u8,
     interrupt_enabled: u8,
 }
@@ -32,6 +34,7 @@ impl MMU {
             hram: [0_u8; HRAM_SIZE],
             gpu: GPU::new(screen_data_sender),
             serial: Serial::new(),
+            clock: Clock::new(),
             interrupt_flags: 0,
             interrupt_enabled: 0,
         }
@@ -41,6 +44,10 @@ impl MMU {
         self.gpu.run_cycle(cpu_cycles);
         self.interrupt_flags |= self.gpu.interrupt;
         self.gpu.interrupt = 0;
+
+        self.clock.run_cycle(cpu_cycles);
+        self.interrupt_flags |= self.clock.interrupt;
+        self.clock.interrupt = 0;
     }
 
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
@@ -51,10 +58,9 @@ impl MMU {
             0xA000...0xBFFF => panic!("MMU ERROR: Load from cart RAM not implemented"), // Load from cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize], // Working RAM
             0xFE00...0xFE9F => self.gpu.read_oam(addr), // Graphics - sprite information
-//            0xFF00 => 0, // Input read
+            0xFF00 => panic!("Input read not implemented!"), // Input read
             0xFF01...0xFF02 => self.serial.read(addr), // Serial read
-//            0xFF04 => 0, // Div register
-//            0xFF05...0xFF07 => 0, // Timer counter, modulo and control
+            0xFF04...0xFF07 => self.clock.read_byte(addr), // read Clock values
             0xFF0F => self.interrupt_flags, // Interrupt flags
 //            0xFF10...0xFF26 => 0, // Sound control
 //            0xFF30...0xFF3F => 0, // Sound wave pattern RAM
@@ -78,10 +84,9 @@ impl MMU {
             0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Write to cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize] = value, // Working RAM
             0xFE00...0xFE9F => self.gpu.write_oam(addr, value), // Graphics - sprite information
-//            0xFF00 => (), // Input write
+            0xFF00 => panic!("Input write not implemented!"), // Input write
             0xFF01...0xFF02 => self.serial.write(addr, value), // Serial write
-//            0xFF04 => (), // Div register
-//            0xFF05...0xFF07 => (), // Timer counter, modulo and control
+            0xFF04...0xFF07 => self.clock.write_byte(addr, value), // write Clock values
             0xFF0F => self.interrupt_flags = value, // Interrupt flags
 //            0xFF10...0xFF26 => (), // Sound control
 //            0xFF30...0xFF3F => (), // Sound wave pattern RAM

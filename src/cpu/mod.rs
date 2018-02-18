@@ -5,8 +5,6 @@ use mmu;
 
 mod ops;
 
-//const CLOCK_SPEED: f64 = 4_194_304_f64;
-
 pub struct CPU {
     reg: register::Registers,
     pub mmu: mmu::MMU,
@@ -17,6 +15,9 @@ pub struct CPU {
 }
 
 impl CPU {
+    pub const CLOCK_SPEED: u32 = 4_194_304_u32;
+    pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4;
+
     pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
         Self {
             reg: register::Registers::new(),
@@ -124,15 +125,3 @@ impl CPU {
         self.reg.pc = (u32::from(self.reg.pc) as i32 + i32::from(n)) as u16;
     }
 }
-
-//struct Clock {
-//
-//}
-//
-//impl Clock {
-//    fn new() -> Clock {
-//        Clock {
-//            m
-//        }
-//    }
-//}
