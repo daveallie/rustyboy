@@ -8,7 +8,6 @@
 #![cfg_attr(feature="clippy", allow(print_stdout))]
 
 extern crate glium;
-extern crate rand;
 
 mod clock;
 mod cpu;
