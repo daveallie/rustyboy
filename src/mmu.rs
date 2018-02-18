@@ -99,6 +99,14 @@ impl MMU {
         self.write_byte(addr + 1, (value >> 8) as u8);
     }
 
+    pub fn get_triggered_interrupts(&self) -> u8 {
+        self.interrupt_flags & self.interrupt_enabled
+    }
+
+    pub fn reset_interrupt(&mut self, flag: u8) {
+        self.interrupt_flags &= !flag;
+    }
+
     fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
         let mut file = match File::open(cart_path) {
             Ok(f) => f,

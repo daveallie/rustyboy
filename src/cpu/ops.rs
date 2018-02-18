@@ -92,6 +92,10 @@ impl CPU {
                 self.mmu.write_byte(self.reg.get_hl(), value);
                 3
             }
+            0x76 => { // halt
+                self.halting = true;
+                1
+            }
             0x78 => { // load b into a
                 self.reg.a = read_regs.b;
                 1
@@ -227,13 +231,17 @@ impl CPU {
                 self.reg.a = self.mmu.read_byte(addr);
                 3
             }
-            0xF3 => {
-                self.disable_interrupt = 2;
+            0xF3 => { // disable interrupts after following cpu instruction
+                self.disable_interrupt_after = 2;
                 1
             }
             0xF9 => { // Load hl into stack pointer
                 self.reg.sp = self.reg.get_hl();
                 2
+            }
+            0xFB => { // enable interrupts after following cpu instruction
+                self.enable_interrupt_after = 2;
+                1
             }
             0xFE => {
                 let input = self.get_byte();
