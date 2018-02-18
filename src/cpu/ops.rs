@@ -6,7 +6,8 @@ impl CPU {
         let read_regs = self.reg;
         let code = self.get_byte();
 
-//        println!("instr: 0x{:X} -- opcode: 0x{:X}", read_regs.pc, code);
+        #[cfg(feature = "debugger")]
+        println!("instr: 0x{:X} -- opcode: 0x{:X}", read_regs.pc, code);
 
         match code {
             0x00 => { // nop
@@ -57,7 +58,7 @@ impl CPU {
             }
             0x20 => { // JR * if Z is reset
                 if self.reg.get_flag(Flags::Z) {
-                    self.reg.pc += 1;
+                    self.reg.pc += 1; // Skip jump destination byte
                     2
                 } else {
                     self.jr();

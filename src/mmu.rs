@@ -9,14 +9,16 @@ use serial::Serial;
 // this should be expanded to 0x8000 to support
 // the switchable memory modules.
 const WRAM_SIZE: usize = 0x2000;
-const ZRAM_SIZE: usize = 0x80;
+const HRAM_SIZE: usize = 0x80;
 
 pub struct MMU {
     rom: Vec<u8>,
     wram: [u8; WRAM_SIZE], // Working RAM
-    zram: [u8; ZRAM_SIZE], // Zero page RAM
+    hram: [u8; HRAM_SIZE], // High RAM
     gpu: GPU,
     serial: Serial,
+    interrupt_flags: u8,
+    interrupt_enabled: u8,
 }
 
 impl MMU {
@@ -27,14 +29,17 @@ impl MMU {
         Self {
             rom: cart_data,
             wram: [0_u8; WRAM_SIZE],
-            zram: [0_u8; ZRAM_SIZE],
+            hram: [0_u8; HRAM_SIZE],
             gpu: GPU::new(screen_data_sender),
             serial: Serial::new(),
+            interrupt_flags: 0,
+            interrupt_enabled: 0,
         }
     }
 
     pub fn run_cycle(&mut self, cpu_cycles: u8) {
-        self.gpu.run_cycle(cpu_cycles)
+        self.gpu.run_cycle(cpu_cycles);
+        self.interrupt_flags |= self.gpu.interrupt;
     }
 
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
@@ -49,12 +54,13 @@ impl MMU {
             0xFF01...0xFF02 => self.serial.read(addr), // Serial read
 //            0xFF04 => 0, // Div register
 //            0xFF05...0xFF07 => 0, // Timer counter, modulo and control
-//            0xFF0F => 0, // Interrupt flag
+            0xFF0F => self.interrupt_flags, // Interrupt flags
 //            0xFF10...0xFF26 => 0, // Sound control
 //            0xFF30...0xFF3F => 0, // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.read_control(addr),
 //            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (read) (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
-            0xFF80...0xFFFF => self.zram[(addr & 0x7F) as usize], // Zero page RAM
+            0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize], // High RAM
+            0xFFFF => self.interrupt_enabled, // Interrupt enable
             _ => 0,
         }
     }
@@ -75,13 +81,14 @@ impl MMU {
             0xFF01...0xFF02 => self.serial.write(addr, value), // Serial write
 //            0xFF04 => (), // Div register
 //            0xFF05...0xFF07 => (), // Timer counter, modulo and control
-//            0xFF0F => (), // Interrupt flag
+            0xFF0F => self.interrupt_flags = value, // Interrupt flags
 //            0xFF10...0xFF26 => (), // Sound control
 //            0xFF30...0xFF3F => (), // Sound wave pattern RAM
+            0xFF46 => self.dma_into_oam(value),
             0xFF40...0xFF4B => self.gpu.write_control(addr, value),
-            0xFF4D => self.dma_into_oam(value),
 //            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}", addr), // Memory mapped I/O CGB ONLY
-            0xFF80...0xFFFF => self.zram[(addr & 0x7F) as usize] = value, // Zero page RAM
+            0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize] = value, // High RAM
+            0xFFFF => self.interrupt_enabled = value, // Interrupt enable
             _ => (),
         }
     }

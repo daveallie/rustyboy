@@ -18,6 +18,7 @@ pub struct GPU {
     ly: u8,
     render_clock: u32,
     screen_data_sender: mpsc::SyncSender<Vec<u8>>,
+    pub interrupt: u8,
 }
 
 impl GPU {
@@ -39,6 +40,7 @@ impl GPU {
             ly: 0,
             render_clock: 0,
             screen_data_sender,
+            interrupt: 0,
         }
     }
 
@@ -120,6 +122,9 @@ impl GPU {
     fn increment_line(&mut self) {
         self.ly = (self.ly + 1) % 154;
         if self.ly >= 144 { // V-Blank
+            if self.ly == 144 {
+                self.interrupt |= 0x01; // Mark V-Blank interrupt
+            }
             self.render_screen();
         }
     }

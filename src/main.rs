@@ -56,7 +56,7 @@ fn run(mut cpu: CPU, mut screen: Screen) {
 }
 
 #[cfg(feature = "debugger")]
-fn run(mut cpu: CPU, mut screen: Screen) {
+fn run(cpu: CPU, mut screen: Screen) {
     let debug_after_cycles = env::args().nth(2).map(|item| item.parse::<u32>().unwrap());
     let mut debugger = Debugger::new(debug_after_cycles, cpu);
 
