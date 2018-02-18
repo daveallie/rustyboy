@@ -38,7 +38,7 @@ impl MMU {
     }
 
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
-    pub fn read_byte(&mut self, addr: u16) -> u8 {
+    pub fn read_byte(&self, addr: u16) -> u8 {
         match addr {
             0x0000...0x7FFF => self.rom[addr as usize], // ROM
             0x8000...0x9FFF => self.gpu.read_video_ram(addr), // Load from GPU
@@ -79,7 +79,8 @@ impl MMU {
 //            0xFF10...0xFF26 => (), // Sound control
 //            0xFF30...0xFF3F => (), // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.write_control(addr, value),
-//            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
+            0xFF4D => self.dma_into_oam(value),
+//            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}", addr), // Memory mapped I/O CGB ONLY
             0xFF80...0xFFFF => self.zram[(addr & 0x7F) as usize] = value, // Zero page RAM
             _ => (),
         }
@@ -99,6 +100,15 @@ impl MMU {
         match file.read_to_end(buffer) {
             Ok(_) => println!("ROM loaded from {}", &cart_path),
             Err(e) => panic!("Failed to read file from {}: {}", cart_path, e),
+        }
+    }
+
+    fn dma_into_oam(&mut self, dma_start: u8) {
+        // DMA start can be addressed as 0x0000, 0x0100, 0x0200, etc
+        let actual_dma_start = u16::from(dma_start) << 8; // turns 0x01 to 0x0100
+        for i in 0..(GPU::OAM_SIZE as u16) {
+            let value = self.read_byte(actual_dma_start + i);
+            self.gpu.write_oam(i, value);
         }
     }
 }

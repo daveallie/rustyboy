@@ -1,7 +1,7 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", deny(clippy_pedantic))]
-#![cfg_attr(feature="clippy", allow(missing_docs_in_private_items,cast_possible_truncation))]
+#![cfg_attr(feature="clippy", allow(missing_docs_in_private_items,cast_possible_truncation,similar_names))]
 
 // until I have logging
 #![cfg_attr(feature="clippy", allow(print_stdout))]
@@ -10,9 +10,6 @@
 
 extern crate glium;
 extern crate rand;
-
-use std::{thread, env};
-use std::sync::mpsc;
 
 mod cpu;
 mod gpu;
@@ -23,6 +20,13 @@ mod serial;
 #[cfg(feature = "debugger")]
 mod debugger;
 
+use std::{thread, env};
+use std::sync::mpsc;
+use cpu::CPU;
+use screen::Screen;
+#[cfg(feature = "debugger")]
+use debugger::Debugger;
+
 fn main() {
     let cart_path = match env::args().nth(1) {
         Some(v) => v,
@@ -31,14 +35,14 @@ fn main() {
 
     let (screen_data_sender, screen_data_receiver) = mpsc::sync_channel(1);
 
-    let cpu = cpu::CPU::new(&cart_path, screen_data_sender);
-    let screen = screen::Screen::new("Rustyboy", 4, screen_data_receiver);
+    let cpu = CPU::new(&cart_path, screen_data_sender);
+    let screen = Screen::new("Rustyboy", 4, screen_data_receiver);
 
     run(cpu, screen);
 }
 
 #[cfg(not(feature = "debugger"))]
-fn run(mut cpu: cpu::CPU, mut screen: screen::Screen) {
+fn run(mut cpu: CPU, mut screen: Screen) {
     let cpu_thread = thread::spawn(move || {
         loop {
             cpu.run_cycle();
@@ -52,8 +56,18 @@ fn run(mut cpu: cpu::CPU, mut screen: screen::Screen) {
 }
 
 #[cfg(feature = "debugger")]
-fn run(mut cpu: cpu::CPU) {
+fn run(mut cpu: CPU, mut screen: Screen) {
     let debug_after_cycles = env::args().nth(2).map(|item| item.parse::<u32>().unwrap());
-    let mut debugger = debugger::Debugger::new(debug_after_cycles, cpu);
-    debugger.run();
+    let mut debugger = Debugger::new(debug_after_cycles, cpu);
+
+    let cpu_thread = thread::spawn(move || {
+        loop {
+            debugger.run();
+        }
+    });
+
+    screen.start_loop();
+    if let Err(e) = cpu_thread.join() {
+        panic!("Error: Failed to join CPU thread: {:?}", e);
+    }
 }

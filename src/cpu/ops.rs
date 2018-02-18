@@ -6,7 +6,7 @@ impl CPU {
         let read_regs = self.reg;
         let code = self.get_byte();
 
-        println!("instr: 0x{:X} -- opcode: 0x{:X}", read_regs.pc, code);
+//        println!("instr: 0x{:X} -- opcode: 0x{:X}", read_regs.pc, code);
 
         match code {
             0x00 => { // nop

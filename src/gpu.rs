@@ -1,5 +1,5 @@
 use std::sync::mpsc;
-use screen;
+use screen::Screen;
 
 const VIDEO_RAM_SIZE: usize = 0x2000;
 
@@ -10,7 +10,7 @@ pub struct GPU {
     bg_palette_map: [u8; 4],
     obj_palette_0: u8,
     obj_palette_1: u8,
-    oam: [u8; 160], // Sprite attribute table
+    oam: [u8; GPU::OAM_SIZE], // Sprite attribute table
     lcd_control: u8,
     stat: u8,
     scy: u8,
@@ -21,9 +21,11 @@ pub struct GPU {
 }
 
 impl GPU {
+    pub const OAM_SIZE: usize = 0xA0;
+
     pub fn new(screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
         Self {
-            next_screen_buffer: vec![0_u8; (3 * screen::Screen::WIDTH * screen::Screen::HEIGHT) as usize],
+            next_screen_buffer: vec![0_u8; (3 * Screen::WIDTH * Screen::HEIGHT) as usize],
             video_ram: [0_u8; VIDEO_RAM_SIZE],
             bg_palette: 0,
             obj_palette_0: 0,
@@ -68,13 +70,14 @@ impl GPU {
         self.video_ram[(addr & 0x1FFF) as usize] = value;
     }
 
-    pub fn read_control(&mut self, addr: u16) -> u8 {
+    pub fn read_control(&self, addr: u16) -> u8 {
         match addr {
             0xFF40 => self.lcd_control,
             0xFF41 => self.stat,
             0xFF42 => self.scy,
             0xFF43 => self.scx,
             0xFF44 => self.ly,
+            0xFF46 => unreachable!("DMA Address is write only"),
             0xFF47 => self.bg_palette,
             0xFF48 => self.obj_palette_0,
             0xFF49 => self.obj_palette_1,
@@ -89,6 +92,7 @@ impl GPU {
             0xFF42 => self.scy = value,
             0xFF43 => self.scx = value,
             0xFF44 => (), // read only
+            0xFF46 => unreachable!("DMA write handled in mmu.rs"),
             0xFF47 => self.bg_palette = value,
             0xFF48 => self.obj_palette_0 = value,
             0xFF49 => self.obj_palette_1 = value,
@@ -128,27 +132,27 @@ impl GPU {
         let bg_tile_map_addr = self.bg_tile_map_addr();
         let bg_tile_data_addr = self.bg_tile_data_addr();
         let bgy = self.scy.wrapping_add(self.ly);
-        let bgy_tile = (bgy as u16 >> 3) & 31;
-        let bgy_pixel_in_tile = bgy as u16 & 0x07;
+        let bgy_tile = (u16::from(bgy) >> 3) & 31;
+        let bgy_pixel_in_tile = u16::from(bgy) & 0x07;
 
-        for x in 0 .. (screen::Screen::WIDTH as usize) {
-            let bgx = self.scx as u32 + x as u32;
+        for x in 0 .. (Screen::WIDTH as usize) {
+            let bgx = u32::from(self.scx) + x as u32;
             let bgx_tile = (bgx as u16 >> 3) & 31;
             let bgx_pixel_in_tile = bgx as u8 & 0x07;
 
             let tile_number_addr = bg_tile_map_addr + bgy_tile * 32 + bgx_tile;
-            let tile_number: u8 = self.video_ram[(tile_number_addr & 0x1FFF) as usize];
+            let tile_number: u8 = self.read_byte_video_ram(tile_number_addr);
 
             let tile_addr = if bg_tile_data_addr == 0x8000 {
                 // regular reading
-                bg_tile_data_addr + (tile_number as u16 * 16)
+                bg_tile_data_addr + u16::from(tile_number) * 16
             } else {
                 // reading with offset
-                bg_tile_data_addr + ((tile_number as i8 as i16 + 128) as u16 * 16)
+                bg_tile_data_addr + (i16::from(tile_number as i8) + 128) as u16 * 16
             };
 
-            let tile_line_addr = bgy_pixel_in_tile * 2;
-            let (tile_line_data_1, tile_line_data_2) = (self.video_ram[tile_line_addr as usize], self.video_ram[1 + tile_line_addr as usize]);
+            let tile_line_addr = tile_addr + bgy_pixel_in_tile * 2;
+            let (tile_line_data_1, tile_line_data_2) = (self.read_byte_video_ram(tile_line_addr), self.read_byte_video_ram(tile_line_addr + 1));
             let pixel_in_line_mask = 1 << bgx_pixel_in_tile;
             let pixel_data_1: u8 = if tile_line_data_1 & pixel_in_line_mask > 0 {
                 1
@@ -184,10 +188,14 @@ impl GPU {
     }
 
     fn set_pixel_color_next_screen_buffer(&mut self, x_pixel: usize, color: u8) {
-        let base_addr = (self.ly as usize * screen::Screen::WIDTH as usize + x_pixel) * 3;
+        let base_addr = (self.ly as usize * Screen::WIDTH as usize + x_pixel) * 3;
         self.next_screen_buffer[base_addr] = color;
         self.next_screen_buffer[base_addr + 1] = color;
         self.next_screen_buffer[base_addr + 2] = color;
+    }
+
+    fn read_byte_video_ram(&self, addr: u16) -> u8 {
+        self.video_ram[(addr & 0x1FFF) as usize]
     }
 
     pub fn render_screen(&self) {
