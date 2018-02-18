@@ -107,6 +107,15 @@ impl MMU {
         self.interrupt_flags &= !flag;
     }
 
+    fn dma_into_oam(&mut self, dma_start: u8) {
+        // DMA start can be addressed as 0x0000, 0x0100, 0x0200, etc
+        let actual_dma_start = u16::from(dma_start) << 8; // turns 0x01 to 0x0100
+        for i in 0..(GPU::OAM_SIZE as u16) {
+            let value = self.read_byte(actual_dma_start + i);
+            self.gpu.write_oam(i, value);
+        }
+    }
+
     fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
         let mut file = match File::open(cart_path) {
             Ok(f) => f,
@@ -116,15 +125,6 @@ impl MMU {
         match file.read_to_end(buffer) {
             Ok(_) => println!("ROM loaded from {}", &cart_path),
             Err(e) => panic!("Failed to read file from {}: {}", cart_path, e),
-        }
-    }
-
-    fn dma_into_oam(&mut self, dma_start: u8) {
-        // DMA start can be addressed as 0x0000, 0x0100, 0x0200, etc
-        let actual_dma_start = u16::from(dma_start) << 8; // turns 0x01 to 0x0100
-        for i in 0..(GPU::OAM_SIZE as u16) {
-            let value = self.read_byte(actual_dma_start + i);
-            self.gpu.write_oam(i, value);
         }
     }
 }

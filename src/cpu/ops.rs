@@ -70,6 +70,10 @@ impl CPU {
                 self.reg.set_hl(value);
                 3
             }
+            0x22 => { // write a into location pointed by hl (and inc hl)
+                self.mmu.write_byte(self.reg.get_hl_and_inc(), read_regs.a);
+                2
+            }
             0x2A => { // load value at hl address into a. inc hl
                 self.mmu.write_byte(self.reg.get_hl_and_inc(), read_regs.a);
                 2
@@ -95,6 +99,10 @@ impl CPU {
             0x76 => { // halt
                 self.halting = true;
                 1
+            }
+            0x77 => { // load a into location pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.a);
+                2
             }
             0x78 => { // load b into a
                 self.reg.a = read_regs.b;
