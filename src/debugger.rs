@@ -39,11 +39,20 @@ impl Debugger {
         }
     }
 
-    fn should_stop(&self) -> bool {
+    fn should_stop(&mut self) -> bool {
+        if let Some(index) = self.stop_and_remove_breakon() {
+            self.reg_break_points.remove(index);
+            return true;
+        }
+
+        self.debug_after_cycles_enabled && self.current_steps >= self.debug_after_cycles
+    }
+
+    fn stop_and_remove_breakon(&self) -> Option<usize> {
         let register = self.cpu.reg;
         let break_points = &self.reg_break_points;
 
-        for break_point in break_points {
+        for (i, break_point) in break_points.iter().enumerate() {
             let key = break_point.key.as_str();
             let reg_value = match key {
                 "a" => register.a as u16,
@@ -60,11 +69,11 @@ impl Debugger {
 
             if reg_value == break_point.value {
                 output(&format!("Breaking as {} is {}\n", key, reg_value));
-                return true
+                return Some(i)
             }
         }
 
-        self.debug_after_cycles_enabled && self.current_steps >= self.debug_after_cycles
+        None
     }
 
     fn debug(&mut self) {
@@ -85,6 +94,7 @@ impl Debugger {
             Some("n") | Some("next") => {
                 let jump = read_num(words.next().unwrap_or("0"));
                 self.debug_after_cycles = self.current_steps + jump;
+                self.debug_after_cycles_enabled = true;
                 self.debugging = false;
             },
             Some("bo") | Some("breakon") => {
