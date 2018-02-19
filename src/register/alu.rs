@@ -96,6 +96,6 @@ impl Registers {
         self.set_flag(Flags::C, false);
         self.set_flag(Flags::H, false);
         self.set_flag(Flags::N, false);
-        return result
+        result
     }
 }

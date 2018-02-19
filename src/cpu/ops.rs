@@ -225,6 +225,10 @@ impl CPU {
                 self.reg.a = self.reg.alu_dec(read_regs.a);
                 1
             }
+            0x3E => { // load byte into a
+                self.reg.a = self.get_byte();
+                2
+            }
             0x40 => { // load b into b
                 self.reg.b = read_regs.b;
                 1
@@ -497,10 +501,6 @@ impl CPU {
                 self.mmu.write_byte(addr, read_regs.a);
                 4
             }
-            0x3E => { // load byte into a
-                self.reg.a = self.get_byte();
-                2
-            }
             0xA0 => { // and a and b, store in a
                 self.reg.alu_and(read_regs.b);
                 1
@@ -728,7 +728,7 @@ impl CPU {
                 self.reg.pc = 0x20;
                 8
             }
-            0xE5 => { // jump to address in hl
+            0xE9 => { // jump to address in hl
                 let hl = read_regs.get_hl();
                 self.reg.pc = hl;
                 1
