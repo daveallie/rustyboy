@@ -52,6 +52,10 @@ impl CPU {
         cycles
     }
 
+    pub fn step(&mut self) -> u8 {
+        self.call_reg_op()
+    }
+
     fn run_cpu_cycle(&mut self) -> u8 {
         self.update_interrupt_counters();
         let interrupt_cycles = self.jump_on_interrupt();

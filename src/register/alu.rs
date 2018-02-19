@@ -18,21 +18,33 @@ impl Registers {
         result
     }
 
-    pub fn alu_sub(&mut self, input: u8, usec: bool) {
-        let carry: u8 =
-            if usec && self.get_flag(Flags::C) {
-                1
-            } else {
-                0
-            };
-
+    pub fn alu_add(&mut self, input: u8) {
         let a = self.a;
-        let result = a.wrapping_sub(input).wrapping_sub(carry);
+        let result = a.wrapping_add(input);
         self.set_flag(Flags::Z, result == 0);
-        self.set_flag(Flags::H, (a & 0x0F) < (input & 0x0F) + carry);
-        self.set_flag(Flags::N, true);
-        self.set_flag(Flags::C, u16::from(a) < u16::from(input) + u16::from(carry));
+        self.set_flag(Flags::H, (a & 0x0F) + (input & 0x0F) > 0x0F);
+        self.set_flag(Flags::N, false);
+        self.set_flag(Flags::C, 0xFF - a < input);
         self.a = result;
+    }
+
+    pub fn alu_sub(&mut self, input: u8) {
+        let a = self.a;
+        let result = a.wrapping_sub(input);
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::H, (a & 0x0F) < (input & 0x0F));
+        self.set_flag(Flags::N, true);
+        self.set_flag(Flags::C, a < input);
+        self.a = result;
+    }
+
+    pub fn alu_add_16_bit(&mut self, input: u16) {
+        let hl = self.get_hl();
+        let result = hl.wrapping_add(input);
+        self.set_flag(Flags::H, (hl & 0x07FF) + (input & 0x07FF) > 0x07FF);
+        self.set_flag(Flags::N, false);
+        self.set_flag(Flags::C, 0xFFFF - hl < input);
+        self.set_hl(result);
     }
 
     pub fn alu_or(&mut self, input: u8) {
@@ -64,11 +76,26 @@ impl Registers {
 
     pub fn alu_cp(&mut self, input: u8) {
         let temp_a = self.a;
-        self.alu_sub(input, false);
+        self.alu_sub(input);
         self.a = temp_a;
     }
 
     pub fn alu_daa(&mut self) {
         panic!("WTF IS THIS DAA SHIT")
+    }
+
+    pub fn alu_cpl(&mut self) {
+        self.a = !self.a;
+        self.set_flag(Flags::C, true);
+        self.set_flag(Flags::H, true);
+    }
+
+    pub fn alu_nible_swap(&mut self, input: u8) -> u8 {
+        let result = ((input & 0x0F) << 4) | ((input & 0xF0) >> 4);
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, false);
+        self.set_flag(Flags::H, false);
+        self.set_flag(Flags::N, false);
+        return result
     }
 }
