@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use glium::{self, glutin, texture, Surface};
 use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 pub struct Screen {
     display: glium::Display,
@@ -55,6 +57,9 @@ impl Screen {
                 Err(mpsc::TryRecvError::Empty) => (),
                 Err(mpsc::TryRecvError::Disconnected) => closed = true,
             }
+
+            // Sleep for 1/60th of a second
+            thread::sleep(Duration::new(0, 16_666));
         }
     }
 
