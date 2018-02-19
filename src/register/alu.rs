@@ -53,9 +53,22 @@ impl Registers {
         self.a = result;
     }
 
+    pub fn alu_and(&mut self, input: u8) {
+        let result = self.a & input;
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, false);
+        self.set_flag(Flags::H, true);
+        self.set_flag(Flags::N, false);
+        self.a = result;
+    }
+
     pub fn alu_cp(&mut self, input: u8) {
         let temp_a = self.a;
         self.alu_sub(input, false);
         self.a = temp_a;
+    }
+
+    pub fn alu_daa(&mut self) {
+        panic!("WTF IS THIS DAA SHIT")
     }
 }

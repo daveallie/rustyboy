@@ -15,6 +15,8 @@ pub struct GPU {
     stat: u8,
     scy: u8,
     scx: u8,
+    win_y: u8,
+    win_x: u8,
     ly: u8,
     render_clock: u32,
     screen_data_sender: mpsc::SyncSender<Vec<u8>>,
@@ -37,6 +39,8 @@ impl GPU {
             stat: 0,
             scy: 0,
             scx: 0,
+            win_y: 0,
+            win_x: 0,
             ly: 0,
             render_clock: 0,
             screen_data_sender,
@@ -83,6 +87,8 @@ impl GPU {
             0xFF47 => self.bg_palette,
             0xFF48 => self.obj_palette_0,
             0xFF49 => self.obj_palette_1,
+            0xFF4A => self.win_y,
+            0xFF4B => self.win_x,
             _ => panic!("Unknown GPU control read operation: 0x{:X}", addr),
         }
     }
@@ -98,6 +104,8 @@ impl GPU {
             0xFF47 => self.bg_palette = value,
             0xFF48 => self.obj_palette_0 = value,
             0xFF49 => self.obj_palette_1 = value,
+            0xFF4A => self.win_y = value,
+            0xFF4B => self.win_x = value,
             _ => panic!("Unknown GPU control write operation: 0x{:X}", addr),
         }
     }

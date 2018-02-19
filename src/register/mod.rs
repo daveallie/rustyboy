@@ -47,6 +47,20 @@ impl Registers {
         }
     }
 
+    pub fn set_af(&mut self, value: u16) {
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let first_byte = (value >> 8) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let second_byte = (value & 0x00FF) as u8;
+
+        self.a = first_byte;
+        self.f = second_byte;
+    }
+
+    pub fn get_af(&self) -> u16 {
+        self.get_unioned_address(self.a, self.f)
+    }
+
     pub fn set_bc(&mut self, value: u16) {
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         let first_byte = (value >> 8) as u8;
@@ -59,6 +73,20 @@ impl Registers {
 
     pub fn get_bc(&self) -> u16 {
         self.get_unioned_address(self.b, self.c)
+    }
+
+    pub fn set_de(&mut self, value: u16) {
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let first_byte = (value >> 8) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let second_byte = (value & 0x00FF) as u8;
+
+        self.d = first_byte;
+        self.e = second_byte;
+    }
+
+    pub fn get_de(&self) -> u16 {
+        self.get_unioned_address(self.d, self.e)
     }
 
     pub fn set_hl(&mut self, value: u16) {
