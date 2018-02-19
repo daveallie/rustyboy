@@ -98,9 +98,9 @@ impl CPU {
         }
         self.interrupts_enabled = false;
 
-        let interrupt_jump_addresses: [u16; 6] = [0, 0x40, 0x48, 0x50, 0x58, 0x60];
+        let interrupt_jump_addresses: [u16; 5] = [0x40, 0x48, 0x50, 0x58, 0x60];
 
-        for flag_number in 1..5 {
+        for flag_number in 0..4 {
             let flag: u8 = 1 << flag_number;
             if interrupt_flags & flag > 0 {
                 self.mmu.reset_interrupt(flag);
@@ -111,7 +111,7 @@ impl CPU {
             }
         }
 
-        panic!("Unknown interrupt was not handled!");
+        panic!("Unknown interrupt was not handled! 0b{:08b}", interrupt_flags);
     }
 
     fn get_byte(&mut self) -> u8 {
