@@ -200,13 +200,11 @@ impl CPU {
                 3
             }
             0xC9 => { // load word off stack and move to that address
-                let addr = self.mmu.read_word(read_regs.sp);
-                self.reg.sp = read_regs.sp + 2;
-                self.reg.pc = addr;
+                self.reg.pc = self.pop_stack();
                 2
             }
             0xCC => { // call next word conditional on Z flag
-                let new_pc = read_regs.pc + 2;
+                let new_pc = self.reg.pc + 2;
 
                 if self.reg.get_flag(Flags::Z) {
                     self.push_stack(new_pc);
@@ -218,7 +216,9 @@ impl CPU {
                 }
             }
             0xCD => { // call next word
-                self.push_stack(read_regs.pc + 2);
+                let new_pc = self.reg.pc + 2;
+
+                self.push_stack(new_pc);
                 self.reg.pc = self.get_word();
                 6
             }
