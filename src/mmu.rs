@@ -3,6 +3,7 @@ use std::io::Read;
 use std::sync::mpsc;
 use clock::Clock;
 use gpu::GPU;
+use input::Input;
 use serial::Serial;
 
 // Gameboy only needs 0x2000 working RAM
@@ -19,6 +20,7 @@ pub struct MMU {
     gpu: GPU,
     serial: Serial,
     clock: Clock,
+    input: Input,
     interrupt_flags: u8,
     interrupt_enabled: u8,
 }
@@ -35,6 +37,7 @@ impl MMU {
             gpu: GPU::new(screen_data_sender),
             serial: Serial::new(),
             clock: Clock::new(),
+            input: Input::new(),
             interrupt_flags: 0,
             interrupt_enabled: 0,
         }
@@ -58,7 +61,7 @@ impl MMU {
             0xA000...0xBFFF => panic!("MMU ERROR: Load from cart RAM not implemented"), // Load from cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize], // Working RAM
             0xFE00...0xFE9F => self.gpu.read_oam(addr), // Graphics - sprite information
-            0xFF00 => panic!("Input read not implemented!"), // Input read
+            0xFF00 => self.input.read(), // Input read
             0xFF01...0xFF02 => self.serial.read(addr), // Serial read
             0xFF04...0xFF07 => self.clock.read_byte(addr), // read Clock values
             0xFF0F => self.interrupt_flags, // Interrupt flags
@@ -84,7 +87,7 @@ impl MMU {
             0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Write to cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize] = value, // Working RAM
             0xFE00...0xFE9F => self.gpu.write_oam(addr, value), // Graphics - sprite information
-            0xFF00 => panic!("Input write not implemented!"), // Input write
+            0xFF00 => self.input.write(value), // Input write
             0xFF01...0xFF02 => self.serial.write(addr, value), // Serial write
             0xFF04...0xFF07 => self.clock.write_byte(addr, value), // write Clock values
             0xFF0F => self.interrupt_flags = value, // Interrupt flags

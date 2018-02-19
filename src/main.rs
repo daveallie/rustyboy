@@ -12,6 +12,7 @@ extern crate glium;
 mod clock;
 mod cpu;
 mod gpu;
+mod input;
 mod mmu;
 mod register;
 mod screen;
