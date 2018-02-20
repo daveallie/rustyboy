@@ -98,4 +98,10 @@ impl Registers {
         self.set_flag(Flags::N, false);
         result
     }
+
+    pub fn alu_bit_test(&mut self, input: u8, bit: u8) {
+        self.set_flag(Flags::Z, input & (1 << bit) == 0);
+        self.set_flag(Flags::H, true);
+        self.set_flag(Flags::N, false);
+    }
 }

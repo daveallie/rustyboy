@@ -636,6 +636,17 @@ impl CPU {
                 self.reg.pc = self.get_word();
                 3
             }
+            0xC4 => { // call next word if Z flag is reset
+                let new_pc = self.reg.pc + 2;
+
+                if self.reg.get_flag(Flags::Z) {
+                    2
+                } else {
+                    self.push_stack(new_pc);
+                    self.reg.pc = self.get_word();
+                    3
+                }
+            }
             0xC5 => { // push bc onto stack
                 self.push_stack(read_regs.get_bc());
                 4
@@ -670,16 +681,16 @@ impl CPU {
             0xCB => { // run a cb command
                 self.call_cb_op()
             }
-            0xCC => { // call next word conditional on Z flag
+            0xCC => { // call next word if Z flag is set
                 let new_pc = self.reg.pc + 2;
 
                 if self.reg.get_flag(Flags::Z) {
                     self.push_stack(new_pc);
                     self.reg.pc = self.get_word();
-                    6
+                    3
                 } else {
                     self.reg.pc = new_pc;
-                    3
+                    2
                 }
             }
             0xCD => { // call next word
@@ -717,6 +728,18 @@ impl CPU {
                     3
                 }
             }
+            0xD4 => { // call next word if C flag is reset
+                let new_pc = self.reg.pc + 2;
+
+                if self.reg.get_flag(Flags::C) {
+                    self.reg.pc = new_pc;
+                    2
+                } else {
+                    self.push_stack(new_pc);
+                    self.reg.pc = self.get_word();
+                    3
+                }
+            }
             0xD5 => { // push de onto stack
                 self.push_stack(read_regs.get_de());
                 4
@@ -746,6 +769,18 @@ impl CPU {
                     self.reg.pc = new_pc;
                     3
                 } else {
+                    2
+                }
+            }
+            0xDC => { // call next word if C flag is set
+                let new_pc = self.reg.pc + 2;
+
+                if self.reg.get_flag(Flags::C) {
+                    self.push_stack(new_pc);
+                    self.reg.pc = self.get_word();
+                    3
+                } else {
+                    self.reg.pc = new_pc;
                     2
                 }
             }
@@ -887,6 +922,270 @@ impl CPU {
             }
             0x37 => { // swap nibles of a https://www.geeksforgeeks.org/swap-two-nibbles-byte/
                 self.reg.a = self.reg.alu_nible_swap(read_regs.a);
+                2
+            }
+            0x40 => { // test bit 0 in reg b
+                self.reg.alu_bit_test(read_regs.b, 0);
+                2
+            }
+            0x41 => { // test bit 0 in reg c
+                self.reg.alu_bit_test(read_regs.c, 0);
+                2
+            }
+            0x42 => { // test bit 0 in reg d
+                self.reg.alu_bit_test(read_regs.d, 0);
+                2
+            }
+            0x43 => { // test bit 0 in reg e
+                self.reg.alu_bit_test(read_regs.e, 0);
+                2
+            }
+            0x44 => { // test bit 0 in reg h
+                self.reg.alu_bit_test(read_regs.h, 0);
+                2
+            }
+            0x45 => { // test bit 0 in reg l
+                self.reg.alu_bit_test(read_regs.l, 0);
+                2
+            }
+            0x46 => { // test bit 0 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 0);
+                4
+            }
+            0x47 => { // test bit 0 in reg a
+                self.reg.alu_bit_test(read_regs.a, 0);
+                2
+            }
+            0x48 => { // test bit 1 in reg b
+                self.reg.alu_bit_test(read_regs.b, 1);
+                2
+            }
+            0x49 => { // test bit 1 in reg c
+                self.reg.alu_bit_test(read_regs.c, 1);
+                2
+            }
+            0x4A => { // test bit 1 in reg d
+                self.reg.alu_bit_test(read_regs.d, 1);
+                2
+            }
+            0x4B => { // test bit 1 in reg e
+                self.reg.alu_bit_test(read_regs.e, 1);
+                2
+            }
+            0x4C => { // test bit 1 in reg h
+                self.reg.alu_bit_test(read_regs.h, 1);
+                2
+            }
+            0x4D => { // test bit 1 in reg l
+                self.reg.alu_bit_test(read_regs.l, 1);
+                2
+            }
+            0x4E => { // test bit 1 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 1);
+                4
+            }
+            0x4F => { // test bit 1 in reg a
+                self.reg.alu_bit_test(read_regs.a, 1);
+                2
+            }
+            0x50 => { // test bit 2 in reg b
+                self.reg.alu_bit_test(read_regs.b, 2);
+                2
+            }
+            0x51 => { // test bit 2 in reg c
+                self.reg.alu_bit_test(read_regs.c, 2);
+                2
+            }
+            0x52 => { // test bit 2 in reg d
+                self.reg.alu_bit_test(read_regs.d, 2);
+                2
+            }
+            0x53 => { // test bit 2 in reg e
+                self.reg.alu_bit_test(read_regs.e, 2);
+                2
+            }
+            0x54 => { // test bit 2 in reg h
+                self.reg.alu_bit_test(read_regs.h, 2);
+                2
+            }
+            0x55 => { // test bit 2 in reg l
+                self.reg.alu_bit_test(read_regs.l, 2);
+                2
+            }
+            0x56 => { // test bit 2 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 2);
+                4
+            }
+            0x57 => { // test bit 2 in reg a
+                self.reg.alu_bit_test(read_regs.a, 2);
+                2
+            }
+            0x58 => { // test bit 3 in reg b
+                self.reg.alu_bit_test(read_regs.b, 3);
+                2
+            }
+            0x59 => { // test bit 3 in reg c
+                self.reg.alu_bit_test(read_regs.c, 3);
+                2
+            }
+            0x5A => { // test bit 3 in reg d
+                self.reg.alu_bit_test(read_regs.d, 3);
+                2
+            }
+            0x5B => { // test bit 3 in reg e
+                self.reg.alu_bit_test(read_regs.e, 3);
+                2
+            }
+            0x5C => { // test bit 3 in reg h
+                self.reg.alu_bit_test(read_regs.h, 3);
+                2
+            }
+            0x5D => { // test bit 3 in reg l
+                self.reg.alu_bit_test(read_regs.l, 3);
+                2
+            }
+            0x5E => { // test bit 3 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 3);
+                4
+            }
+            0x5F => { // test bit 3 in reg a
+                self.reg.alu_bit_test(read_regs.a, 3);
+                2
+            }
+            0x60 => { // test bit 4 in reg b
+                self.reg.alu_bit_test(read_regs.b, 4);
+                2
+            }
+            0x61 => { // test bit 4 in reg c
+                self.reg.alu_bit_test(read_regs.c, 4);
+                2
+            }
+            0x62 => { // test bit 4 in reg d
+                self.reg.alu_bit_test(read_regs.d, 4);
+                2
+            }
+            0x63 => { // test bit 4 in reg e
+                self.reg.alu_bit_test(read_regs.e, 4);
+                2
+            }
+            0x64 => { // test bit 4 in reg h
+                self.reg.alu_bit_test(read_regs.h, 4);
+                2
+            }
+            0x65 => { // test bit 4 in reg l
+                self.reg.alu_bit_test(read_regs.l, 4);
+                2
+            }
+            0x66 => { // test bit 4 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 4);
+                4
+            }
+            0x67 => { // test bit 4 in reg a
+                self.reg.alu_bit_test(read_regs.a, 4);
+                2
+            }
+            0x68 => { // test bit 5 in reg b
+                self.reg.alu_bit_test(read_regs.b, 5);
+                2
+            }
+            0x69 => { // test bit 5 in reg c
+                self.reg.alu_bit_test(read_regs.c, 5);
+                2
+            }
+            0x6A => { // test bit 5 in reg d
+                self.reg.alu_bit_test(read_regs.d, 5);
+                2
+            }
+            0x6B => { // test bit 5 in reg e
+                self.reg.alu_bit_test(read_regs.e, 5);
+                2
+            }
+            0x6C => { // test bit 5 in reg h
+                self.reg.alu_bit_test(read_regs.h, 5);
+                2
+            }
+            0x6D => { // test bit 5 in reg l
+                self.reg.alu_bit_test(read_regs.l, 5);
+                2
+            }
+            0x6E => { // test bit 5 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 5);
+                4
+            }
+            0x6F => { // test bit 5 in reg a
+                self.reg.alu_bit_test(read_regs.a, 5);
+                2
+            }
+            0x70 => { // test bit 6 in reg b
+                self.reg.alu_bit_test(read_regs.b, 6);
+                2
+            }
+            0x71 => { // test bit 6 in reg c
+                self.reg.alu_bit_test(read_regs.c, 6);
+                2
+            }
+            0x72 => { // test bit 6 in reg d
+                self.reg.alu_bit_test(read_regs.d, 6);
+                2
+            }
+            0x73 => { // test bit 6 in reg e
+                self.reg.alu_bit_test(read_regs.e, 6);
+                2
+            }
+            0x74 => { // test bit 6 in reg h
+                self.reg.alu_bit_test(read_regs.h, 6);
+                2
+            }
+            0x75 => { // test bit 6 in reg l
+                self.reg.alu_bit_test(read_regs.l, 6);
+                2
+            }
+            0x76 => { // test bit 6 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 6);
+                4
+            }
+            0x77 => { // test bit 6 in reg a
+                self.reg.alu_bit_test(read_regs.a, 6);
+                2
+            }
+            0x78 => { // test bit 7 in reg b
+                self.reg.alu_bit_test(read_regs.b, 7);
+                2
+            }
+            0x79 => { // test bit 7 in reg c
+                self.reg.alu_bit_test(read_regs.c, 7);
+                2
+            }
+            0x7A => { // test bit 7 in reg d
+                self.reg.alu_bit_test(read_regs.d, 7);
+                2
+            }
+            0x7B => { // test bit 7 in reg e
+                self.reg.alu_bit_test(read_regs.e, 7);
+                2
+            }
+            0x7C => { // test bit 7 in reg h
+                self.reg.alu_bit_test(read_regs.h, 7);
+                2
+            }
+            0x7D => { // test bit 7 in reg l
+                self.reg.alu_bit_test(read_regs.l, 7);
+                2
+            }
+            0x7E => { // test bit 7 in byte (hl)
+                let addr = read_regs.get_hl();
+                self.reg.alu_bit_test(self.mmu.read_byte(addr), 7);
+                4
+            }
+            0x7F => { // test bit 7 in reg a
+                self.reg.alu_bit_test(read_regs.a, 7);
                 2
             }
             0x80 => { // reset bit 0 in reg b
@@ -1159,6 +1458,278 @@ impl CPU {
             }
             0xBF => { // reset bit 7 in reg a
                 self.reg.a = read_regs.a & !(1 << 7);
+                2
+            }
+            0xC0 => { // set bit 0 in reg b
+                self.reg.b = read_regs.b | (1 << 0);
+                2
+            }
+            0xC1 => { // set bit 0 in reg c
+                self.reg.c = read_regs.c | (1 << 0);
+                2
+            }
+            0xC2 => { // set bit 0 in reg d
+                self.reg.d = read_regs.d | (1 << 0);
+                2
+            }
+            0xC3 => { // set bit 0 in reg e
+                self.reg.e = read_regs.e | (1 << 0);
+                2
+            }
+            0xC4 => { // set bit 0 in reg h
+                self.reg.h = read_regs.h | (1 << 0);
+                2
+            }
+            0xC5 => { // set bit 0 in reg l
+                self.reg.l = read_regs.l | (1 << 0);
+                2
+            }
+            0xC6 => { // set bit 0 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 0);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xC7 => { // set bit 0 in reg a
+                self.reg.a = read_regs.a | (1 << 0);
+                2
+            }
+            0xC8 => { // set bit 1 in reg b
+                self.reg.b = read_regs.b | (1 << 1);
+                2
+            }
+            0xC9 => { // set bit 1 in reg c
+                self.reg.c = read_regs.c | (1 << 1);
+                2
+            }
+            0xCA => { // set bit 1 in reg d
+                self.reg.d = read_regs.d | (1 << 1);
+                2
+            }
+            0xCB => { // set bit 1 in reg e
+                self.reg.e = read_regs.e | (1 << 1);
+                2
+            }
+            0xCC => { // set bit 1 in reg h
+                self.reg.h = read_regs.h | (1 << 1);
+                2
+            }
+            0xCD => { // set bit 1 in reg l
+                self.reg.l = read_regs.l | (1 << 1);
+                2
+            }
+            0xCE => { // set bit 1 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 1);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xCF => { // set bit 1 in reg a
+                self.reg.a = read_regs.a | (1 << 1);
+                2
+            }
+            0xD0 => { // set bit 2 in reg b
+                self.reg.b = read_regs.b | (1 << 2);
+                2
+            }
+            0xD1 => { // set bit 2 in reg c
+                self.reg.c = read_regs.c | (1 << 2);
+                2
+            }
+            0xD2 => { // set bit 2 in reg d
+                self.reg.d = read_regs.d | (1 << 2);
+                2
+            }
+            0xD3 => { // set bit 2 in reg e
+                self.reg.e = read_regs.e | (1 << 2);
+                2
+            }
+            0xD4 => { // set bit 2 in reg h
+                self.reg.h = read_regs.h | (1 << 2);
+                2
+            }
+            0xD5 => { // set bit 2 in reg l
+                self.reg.l = read_regs.l | (1 << 2);
+                2
+            }
+            0xD6 => { // set bit 2 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 2);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xD7 => { // set bit 2 in reg a
+                self.reg.a = read_regs.a | (1 << 2);
+                2
+            }
+            0xD8 => { // set bit 3 in reg b
+                self.reg.b = read_regs.b | (1 << 3);
+                2
+            }
+            0xD9 => { // set bit 3 in reg c
+                self.reg.c = read_regs.c | (1 << 3);
+                2
+            }
+            0xDA => { // set bit 3 in reg d
+                self.reg.d = read_regs.d | (1 << 3);
+                2
+            }
+            0xDB => { // set bit 3 in reg e
+                self.reg.e = read_regs.e | (1 << 3);
+                2
+            }
+            0xDC => { // set bit 3 in reg h
+                self.reg.h = read_regs.h | (1 << 3);
+                2
+            }
+            0xDD => { // set bit 3 in reg l
+                self.reg.l = read_regs.l | (1 << 3);
+                2
+            }
+            0xDE => { // set bit 3 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 3);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xDF => { // set bit 3 in reg a
+                self.reg.a = read_regs.a | (1 << 3);
+                2
+            }
+            0xE0 => { // set bit 4 in reg b
+                self.reg.b = read_regs.b | (1 << 4);
+                2
+            }
+            0xE1 => { // set bit 4 in reg c
+                self.reg.c = read_regs.c | (1 << 4);
+                2
+            }
+            0xE2 => { // set bit 4 in reg d
+                self.reg.d = read_regs.d | (1 << 4);
+                2
+            }
+            0xE3 => { // set bit 4 in reg e
+                self.reg.e = read_regs.e | (1 << 4);
+                2
+            }
+            0xE4 => { // set bit 4 in reg h
+                self.reg.h = read_regs.h | (1 << 4);
+                2
+            }
+            0xE5 => { // set bit 4 in reg l
+                self.reg.l = read_regs.l | (1 << 4);
+                2
+            }
+            0xE6 => { // set bit 4 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 4);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xE7 => { // set bit 4 in reg a
+                self.reg.a = read_regs.a | (1 << 4);
+                2
+            }
+            0xE8 => { // set bit 5 in reg b
+                self.reg.b = read_regs.b | (1 << 5);
+                2
+            }
+            0xE9 => { // set bit 5 in reg c
+                self.reg.c = read_regs.c | (1 << 5);
+                2
+            }
+            0xEA => { // set bit 5 in reg d
+                self.reg.d = read_regs.d | (1 << 5);
+                2
+            }
+            0xEB => { // set bit 5 in reg e
+                self.reg.e = read_regs.e | (1 << 5);
+                2
+            }
+            0xEC => { // set bit 5 in reg h
+                self.reg.h = read_regs.h | (1 << 5);
+                2
+            }
+            0xED => { // set bit 5 in reg l
+                self.reg.l = read_regs.l | (1 << 5);
+                2
+            }
+            0xEE => { // set bit 5 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 5);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xEF => { // set bit 5 in reg a
+                self.reg.a = read_regs.a | (1 << 5);
+                2
+            }
+            0xF0 => { // set bit 6 in reg b
+                self.reg.b = read_regs.b | (1 << 6);
+                2
+            }
+            0xF1 => { // set bit 6 in reg c
+                self.reg.c = read_regs.c | (1 << 6);
+                2
+            }
+            0xF2 => { // set bit 6 in reg d
+                self.reg.d = read_regs.d | (1 << 6);
+                2
+            }
+            0xF3 => { // set bit 6 in reg e
+                self.reg.e = read_regs.e | (1 << 6);
+                2
+            }
+            0xF4 => { // set bit 6 in reg h
+                self.reg.h = read_regs.h | (1 << 6);
+                2
+            }
+            0xF5 => { // set bit 6 in reg l
+                self.reg.l = read_regs.l | (1 << 6);
+                2
+            }
+            0xF6 => { // set bit 6 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 6);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xF7 => { // set bit 6 in reg a
+                self.reg.a = read_regs.a | (1 << 6);
+                2
+            }
+            0xF8 => { // set bit 7 in reg b
+                self.reg.b = read_regs.b | (1 << 7);
+                2
+            }
+            0xF9 => { // set bit 7 in reg c
+                self.reg.c = read_regs.c | (1 << 7);
+                2
+            }
+            0xFA => { // set bit 7 in reg d
+                self.reg.d = read_regs.d | (1 << 7);
+                2
+            }
+            0xFB => { // set bit 7 in reg e
+                self.reg.e = read_regs.e | (1 << 7);
+                2
+            }
+            0xFC => { // set bit 7 in reg h
+                self.reg.h = read_regs.h | (1 << 7);
+                2
+            }
+            0xFD => { // set bit 7 in reg l
+                self.reg.l = read_regs.l | (1 << 7);
+                2
+            }
+            0xFE => { // set bit 7 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) | (1 << 7);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xFF => { // set bit 7 in reg a
+                self.reg.a = read_regs.a | (1 << 7);
                 2
             }
             _ => {
