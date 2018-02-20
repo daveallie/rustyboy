@@ -64,7 +64,7 @@ impl Debugger {
                 "l" => register.l as u16,
                 "pc" => register.pc,
                 "sp" => register.sp,
-                _ => panic!("Unknown register {}\n", key),
+                _ => self.cpu.mmu.read_byte(read_num(key) as u16) as u16,
             } as u32;
 
             if reg_value == break_point.value {
@@ -98,19 +98,14 @@ impl Debugger {
                 self.debugging = false;
             },
             Some("bo") | Some("breakon") => {
-                match words.next().unwrap() {
-                    "register" => {
-                        let key = words.next().unwrap().to_owned();
-                        let value = read_num(words.next().unwrap_or("0"));
-                        self.reg_break_points.push(RegBreakPoint {
-                            key,
-                            value,
-                        });
-                        self.debug_after_cycles_enabled = false;
-                        self.debugging = false;
-                    }
-                    _ => output("Don't know what you mean\n")
-                }
+                let key = words.next().unwrap().to_owned();
+                let value = read_num(words.next().unwrap_or("0"));
+                self.reg_break_points.push(RegBreakPoint {
+                    key,
+                    value,
+                });
+                self.debug_after_cycles_enabled = false;
+                self.debugging = false;
             },
             Some("reg") | Some("registers") => {
                 let action = words.next();
