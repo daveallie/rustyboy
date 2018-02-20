@@ -161,7 +161,7 @@ impl GPU {
             #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
             let bgx_tile = ((bgx & 0xFF) >> 3) as u16;
             #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-            let bgx_pixel_in_tile = (bgx & 0x07) as u8;
+            let bgx_pixel_in_tile = 7 - (bgx & 0x07) as u8;
 
             let tile_number_addr = bg_tile_map_addr + bgy_tile * 32 + bgx_tile;
             let tile_number: u8 = self.read_byte_video_ram(tile_number_addr);
