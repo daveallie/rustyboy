@@ -82,7 +82,7 @@ impl Screen {
         let width = 2 * i32::from(unsigned_width as u16);
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         let height = 2 * i32::from(unsigned_height as u16);
-        let blit_target = glium::BlitTarget { left: 0, bottom: 0, width, height };
+        let blit_target = glium::BlitTarget { left: 0, bottom: height as u32, width, height: -height };
         self.texture.as_surface().blit_whole_color_to(&target, &blit_target, glium::uniforms::MagnifySamplerFilter::Nearest);
         if let Err(e) = target.finish() {
             println!("ERROR: Failed to write to display: {}", e)
