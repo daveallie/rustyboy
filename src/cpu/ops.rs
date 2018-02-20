@@ -42,6 +42,10 @@ impl CPU {
                 self.reg.alu_add_16_bit(read_regs.get_bc());
                 2
             }
+            0x0A => { // load byte pointed to by bc into a
+                self.reg.a = self.mmu.read_byte(read_regs.get_bc());
+                2
+            }
             0x0B => { // dec bc
                 self.reg.set_bc(read_regs.get_bc().wrapping_sub(1));
                 2
@@ -57,6 +61,11 @@ impl CPU {
             0x0E => { // load byte into c
                 self.reg.c = self.get_byte();
                 2
+            }
+            0x11 => { // load word into de
+                let value = self.get_word();
+                self.reg.set_de(value);
+                3
             }
             0x12 => { // write a into location pointed by de
                 self.mmu.write_byte(read_regs.get_de(), read_regs.a);
@@ -78,8 +87,16 @@ impl CPU {
                 self.reg.d = self.get_byte();
                 2
             }
+            0x18 => { // JR *
+                self.jr();
+                3
+            }
             0x19 => { // add de to hl, store in hl
                 self.reg.alu_add_16_bit(read_regs.get_de());
+                2
+            }
+            0x1A => { // load byte pointed to by de into a
+                self.reg.a = self.mmu.read_byte(read_regs.get_de());
                 2
             }
             0x1C => { // inc e
@@ -459,6 +476,10 @@ impl CPU {
                 self.reg.a = read_regs.l;
                 1
             }
+            0x7E => { // load byte pointed to by hl into a
+                self.reg.a = self.mmu.read_byte(read_regs.get_hl());
+                2
+            }
             0x7F => { // load a into a
                 self.reg.a = self.reg.a;
                 1
@@ -602,6 +623,15 @@ impl CPU {
                 self.reg.set_bc(value);
                 3
             }
+            0xC2 => { // jump to location pointed by next word if Z is reset
+                let new_pc = self.get_word();
+                if read_regs.get_flag(Flags::Z) {
+                    2
+                } else {
+                    self.reg.pc = new_pc;
+                    3
+                }
+            }
             0xC3 => { // jump to location point by word
                 self.reg.pc = self.get_word();
                 3
@@ -627,6 +657,15 @@ impl CPU {
             0xC9 => { // load word off stack and move to that address
                 self.reg.pc = self.pop_stack();
                 4
+            }
+            0xCA => { // jump to location pointed by next word if Z is set
+                let new_pc = self.get_word();
+                if read_regs.get_flag(Flags::Z) {
+                    self.reg.pc = new_pc;
+                    3
+                } else {
+                    2
+                }
             }
             0xCB => { // run a cb command
                 self.call_cb_op()
@@ -669,6 +708,15 @@ impl CPU {
                 self.reg.set_de(value);
                 3
             }
+            0xD2 => { // jump to location pointed by next word if C is reset
+                let new_pc = self.get_word();
+                if read_regs.get_flag(Flags::C) {
+                    2
+                } else {
+                    self.reg.pc = new_pc;
+                    3
+                }
+            }
             0xD5 => { // push de onto stack
                 self.push_stack(read_regs.get_de());
                 4
@@ -691,6 +739,15 @@ impl CPU {
                 self.reg.pc = self.pop_stack();
                 self.enable_interrupt_after = 1;
                 4
+            }
+            0xDA => { // jump to location pointed by next word if C is set
+                let new_pc = self.get_word();
+                if read_regs.get_flag(Flags::C) {
+                    self.reg.pc = new_pc;
+                    3
+                } else {
+                    2
+                }
             }
             0xDF => { // push pc to stack and jump to 0x18
                 let old_pc = self.reg.pc;
@@ -830,6 +887,278 @@ impl CPU {
             }
             0x37 => { // swap nibles of a https://www.geeksforgeeks.org/swap-two-nibbles-byte/
                 self.reg.a = self.reg.alu_nible_swap(read_regs.a);
+                2
+            }
+            0x80 => { // reset bit 0 in reg b
+                self.reg.b = read_regs.b & !(1 << 0);
+                2
+            }
+            0x81 => { // reset bit 0 in reg c
+                self.reg.c = read_regs.c & !(1 << 0);
+                2
+            }
+            0x82 => { // reset bit 0 in reg d
+                self.reg.d = read_regs.d & !(1 << 0);
+                2
+            }
+            0x83 => { // reset bit 0 in reg e
+                self.reg.e = read_regs.e & !(1 << 0);
+                2
+            }
+            0x84 => { // reset bit 0 in reg h
+                self.reg.h = read_regs.h & !(1 << 0);
+                2
+            }
+            0x85 => { // reset bit 0 in reg l
+                self.reg.l = read_regs.l & !(1 << 0);
+                2
+            }
+            0x86 => { // reset bit 0 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 0);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0x87 => { // reset bit 0 in reg a
+                self.reg.a = read_regs.a & !(1 << 0);
+                2
+            }
+            0x88 => { // reset bit 1 in reg b
+                self.reg.b = read_regs.b & !(1 << 1);
+                2
+            }
+            0x89 => { // reset bit 1 in reg c
+                self.reg.c = read_regs.c & !(1 << 1);
+                2
+            }
+            0x8A => { // reset bit 1 in reg d
+                self.reg.d = read_regs.d & !(1 << 1);
+                2
+            }
+            0x8B => { // reset bit 1 in reg e
+                self.reg.e = read_regs.e & !(1 << 1);
+                2
+            }
+            0x8C => { // reset bit 1 in reg h
+                self.reg.h = read_regs.h & !(1 << 1);
+                2
+            }
+            0x8D => { // reset bit 1 in reg l
+                self.reg.l = read_regs.l & !(1 << 1);
+                2
+            }
+            0x8E => { // reset bit 1 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 1);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0x8F => { // reset bit 1 in reg a
+                self.reg.a = read_regs.a & !(1 << 1);
+                2
+            }
+            0x90 => { // reset bit 2 in reg b
+                self.reg.b = read_regs.b & !(1 << 2);
+                2
+            }
+            0x91 => { // reset bit 2 in reg c
+                self.reg.c = read_regs.c & !(1 << 2);
+                2
+            }
+            0x92 => { // reset bit 2 in reg d
+                self.reg.d = read_regs.d & !(1 << 2);
+                2
+            }
+            0x93 => { // reset bit 2 in reg e
+                self.reg.e = read_regs.e & !(1 << 2);
+                2
+            }
+            0x94 => { // reset bit 2 in reg h
+                self.reg.h = read_regs.h & !(1 << 2);
+                2
+            }
+            0x95 => { // reset bit 2 in reg l
+                self.reg.l = read_regs.l & !(1 << 2);
+                2
+            }
+            0x96 => { // reset bit 2 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 2);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0x97 => { // reset bit 2 in reg a
+                self.reg.a = read_regs.a & !(1 << 2);
+                2
+            }
+            0x98 => { // reset bit 3 in reg b
+                self.reg.b = read_regs.b & !(1 << 3);
+                2
+            }
+            0x99 => { // reset bit 3 in reg c
+                self.reg.c = read_regs.c & !(1 << 3);
+                2
+            }
+            0x9A => { // reset bit 3 in reg d
+                self.reg.d = read_regs.d & !(1 << 3);
+                2
+            }
+            0x9B => { // reset bit 3 in reg e
+                self.reg.e = read_regs.e & !(1 << 3);
+                2
+            }
+            0x9C => { // reset bit 3 in reg h
+                self.reg.h = read_regs.h & !(1 << 3);
+                2
+            }
+            0x9D => { // reset bit 3 in reg l
+                self.reg.l = read_regs.l & !(1 << 3);
+                2
+            }
+            0x9E => { // reset bit 3 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 3);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0x9F => { // reset bit 3 in reg a
+                self.reg.a = read_regs.a & !(1 << 3);
+                2
+            }
+            0xA0 => { // reset bit 4 in reg b
+                self.reg.b = read_regs.b & !(1 << 4);
+                2
+            }
+            0xA1 => { // reset bit 4 in reg c
+                self.reg.c = read_regs.c & !(1 << 4);
+                2
+            }
+            0xA2 => { // reset bit 4 in reg d
+                self.reg.d = read_regs.d & !(1 << 4);
+                2
+            }
+            0xA3 => { // reset bit 4 in reg e
+                self.reg.e = read_regs.e & !(1 << 4);
+                2
+            }
+            0xA4 => { // reset bit 4 in reg h
+                self.reg.h = read_regs.h & !(1 << 4);
+                2
+            }
+            0xA5 => { // reset bit 4 in reg l
+                self.reg.l = read_regs.l & !(1 << 4);
+                2
+            }
+            0xA6 => { // reset bit 4 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 4);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xA7 => { // reset bit 4 in reg a
+                self.reg.a = read_regs.a & !(1 << 4);
+                2
+            }
+            0xA8 => { // reset bit 5 in reg b
+                self.reg.b = read_regs.b & !(1 << 5);
+                2
+            }
+            0xA9 => { // reset bit 5 in reg c
+                self.reg.c = read_regs.c & !(1 << 5);
+                2
+            }
+            0xAA => { // reset bit 5 in reg d
+                self.reg.d = read_regs.d & !(1 << 5);
+                2
+            }
+            0xAB => { // reset bit 5 in reg e
+                self.reg.e = read_regs.e & !(1 << 5);
+                2
+            }
+            0xAC => { // reset bit 5 in reg h
+                self.reg.h = read_regs.h & !(1 << 5);
+                2
+            }
+            0xAD => { // reset bit 5 in reg l
+                self.reg.l = read_regs.l & !(1 << 5);
+                2
+            }
+            0xAE => { // reset bit 5 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 5);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xAF => { // reset bit 5 in reg a
+                self.reg.a = read_regs.a & !(1 << 5);
+                2
+            }
+            0xB0 => { // reset bit 6 in reg b
+                self.reg.b = read_regs.b & !(1 << 6);
+                2
+            }
+            0xB1 => { // reset bit 6 in reg c
+                self.reg.c = read_regs.c & !(1 << 6);
+                2
+            }
+            0xB2 => { // reset bit 6 in reg d
+                self.reg.d = read_regs.d & !(1 << 6);
+                2
+            }
+            0xB3 => { // reset bit 6 in reg e
+                self.reg.e = read_regs.e & !(1 << 6);
+                2
+            }
+            0xB4 => { // reset bit 6 in reg h
+                self.reg.h = read_regs.h & !(1 << 6);
+                2
+            }
+            0xB5 => { // reset bit 6 in reg l
+                self.reg.l = read_regs.l & !(1 << 6);
+                2
+            }
+            0xB6 => { // reset bit 6 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 6);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xB7 => { // reset bit 6 in reg a
+                self.reg.a = read_regs.a & !(1 << 6);
+                2
+            }
+            0xB8 => { // reset bit 7 in reg b
+                self.reg.b = read_regs.b & !(1 << 7);
+                2
+            }
+            0xB9 => { // reset bit 7 in reg c
+                self.reg.c = read_regs.c & !(1 << 7);
+                2
+            }
+            0xBA => { // reset bit 7 in reg d
+                self.reg.d = read_regs.d & !(1 << 7);
+                2
+            }
+            0xBB => { // reset bit 7 in reg e
+                self.reg.e = read_regs.e & !(1 << 7);
+                2
+            }
+            0xBC => { // reset bit 7 in reg h
+                self.reg.h = read_regs.h & !(1 << 7);
+                2
+            }
+            0xBD => { // reset bit 7 in reg l
+                self.reg.l = read_regs.l & !(1 << 7);
+                2
+            }
+            0xBE => { // reset bit 7 in byte (hl)
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr) & !(1 << 7);
+                self.mmu.write_byte(addr, value);
+                4
+            }
+            0xBF => { // reset bit 7 in reg a
+                self.reg.a = read_regs.a & !(1 << 7);
                 2
             }
             _ => {
