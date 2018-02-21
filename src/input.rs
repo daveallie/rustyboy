@@ -74,6 +74,7 @@ impl Input {
 
                 if key.is_down {
                     self.interrupt |= 0x10;
+                    println!("KEY DOWN: {:?}", key.key_type);
                 }
 
                 self.update_io_register();
