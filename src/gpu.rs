@@ -9,7 +9,9 @@ pub struct GPU {
     bg_palette: u8,
     bg_palette_map: [u8; 4],
     obj_palette_0: u8,
+    obj_palette_0_map: [u8; 4],
     obj_palette_1: u8,
+    obj_palette_1_map: [u8; 4],
     oam: [u8; GPU::OAM_SIZE], // Sprite attribute table
     lcd_control: u8,
     stat: u8,
@@ -31,9 +33,11 @@ impl GPU {
             next_screen_buffer: vec![0_u8; (3 * Screen::WIDTH * Screen::HEIGHT) as usize],
             video_ram: [0_u8; VIDEO_RAM_SIZE],
             bg_palette: 0,
-            obj_palette_0: 0,
-            obj_palette_1: 0,
             bg_palette_map: build_palette_map(0),
+            obj_palette_0: 0,
+            obj_palette_0_map: build_palette_map(0),
+            obj_palette_1: 0,
+            obj_palette_1_map: build_palette_map(0),
             oam: [0_u8; 160],
             lcd_control: 0x91,
             stat: 0,
@@ -105,8 +109,14 @@ impl GPU {
                 self.bg_palette = value;
                 self.bg_palette_map = build_palette_map(value);
             },
-            0xFF48 => self.obj_palette_0 = value,
-            0xFF49 => self.obj_palette_1 = value,
+            0xFF48 => {
+                self.obj_palette_0 = value;
+                self.obj_palette_0_map = build_palette_map(value);
+            },
+            0xFF49 => {
+                self.obj_palette_1 = value;
+                self.obj_palette_1_map = build_palette_map(value);
+            },
             0xFF4A => self.win_y = value,
             0xFF4B => self.win_x = value,
             _ => panic!("Unknown GPU control write operation: 0x{:X}", addr),
@@ -120,6 +130,7 @@ impl GPU {
             self.render_clock = 0;
             self.increment_line();
             self.render_background();
+            self.render_sprites();
             used_cycles
         } else {
             self.render_clock += cycles;
@@ -127,6 +138,18 @@ impl GPU {
             let cycles_u8 = cycles as u8;
             cycles_u8
         }
+    }
+
+    fn is_window_bg_on(&self) -> bool {
+        self.lcd_control & 0x01 > 0
+    }
+
+    fn is_sprite_display_on(&self) -> bool {
+        self.lcd_control & 0x02 > 0
+    }
+
+    fn is_sprite_8_by_16(&self) -> bool {
+        self.lcd_control & 0x04 > 0
     }
 
     fn is_lcd_on(&self) -> bool {
@@ -144,7 +167,7 @@ impl GPU {
     }
 
     fn render_background(&mut self) {
-        if self.ly >= 144 {
+        if !self.is_window_bg_on() || self.ly >= 144 { // bg and window display
             return
         }
 
@@ -162,7 +185,7 @@ impl GPU {
             let bgx_pixel_in_tile = 7 - (bgx & 0x07) as u8;
 
             let tile_number_addr = bg_tile_map_addr + bgy_tile * 32 + bgx_tile;
-            let tile_number: u8 = self.read_byte_video_ram(tile_number_addr);
+            let tile_number: u8 = self.read_video_ram(tile_number_addr);
 
             let tile_addr_offset = if bg_tile_data_addr == 0x8000 {
                 // regular reading
@@ -176,7 +199,7 @@ impl GPU {
             let tile_addr = bg_tile_data_addr + tile_addr_offset;
 
             let tile_line_addr = tile_addr + bgy_pixel_in_tile * 2;
-            let (tile_line_data_1, tile_line_data_2) = (self.read_byte_video_ram(tile_line_addr), self.read_byte_video_ram(tile_line_addr + 1));
+            let (tile_line_data_1, tile_line_data_2) = (self.read_video_ram(tile_line_addr), self.read_video_ram(tile_line_addr + 1));
             let pixel_in_line_mask = 1 << bgx_pixel_in_tile;
             let pixel_data_1: u8 = if tile_line_data_1 & pixel_in_line_mask > 0 {
                 1
@@ -193,6 +216,77 @@ impl GPU {
             let color: u8 = self.bg_palette_map[palette_color_id as usize];
 
             self.set_pixel_color_next_screen_buffer(x, color);
+        }
+    }
+
+    fn render_sprites(&mut self) {
+        if !self.is_sprite_display_on() || self.ly >= 144 {
+            return;
+        }
+
+        let sprite_height = if self.is_sprite_8_by_16() {
+            16
+        } else {
+            8
+        };
+
+        for sprite_id in 0..40_u16 {
+            let sprite_attr_addr = 0xFE00_u16 + (sprite_id * 4);
+            let sprite_y = self.read_video_ram(sprite_attr_addr).wrapping_sub(16);
+            let sprite_x = self.read_video_ram(sprite_attr_addr + 1).wrapping_sub(0x08);
+            let sprite_location = self.read_video_ram(sprite_attr_addr + 2);
+            let sprite_attributes = self.read_video_ram(sprite_attr_addr + 3);
+
+            let sprite_under_bg = sprite_attributes & 0x80 > 0;
+            let y_flip = sprite_attributes & 0x40 > 0;
+            let x_flip = sprite_attributes & 0x20 > 0;
+            let use_palette_0 = sprite_attributes & 0x10 == 0;
+
+            if (self.ly < sprite_y) || (self.ly >= (sprite_y + sprite_height)) {
+                continue;
+            }
+
+            let y_pixel_in_tile = if y_flip {
+                sprite_y + sprite_height - self.ly
+            } else {
+                self.ly - sprite_y
+            } as u16;
+
+            let sprite_addr = 0x8000_u16 + (sprite_location as u16 * 16) + y_pixel_in_tile * 2;
+            let (sprite_data_1, sprite_data_2) = (self.read_video_ram(sprite_addr), self.read_video_ram(sprite_addr + 1));
+
+            for x_pixel_in_tile in 0..8_u8 {
+                let pixel_in_line_mask = if x_flip {
+                    1 << (7 - x_pixel_in_tile)
+                } else {
+                    1 << x_pixel_in_tile
+                };
+
+                let pixel_data_1: u8 = if sprite_data_1 & pixel_in_line_mask > 0 {
+                    1
+                } else {
+                    0
+                };
+                let pixel_data_2: u8 = if sprite_data_2 & pixel_in_line_mask > 0 {
+                    2
+                } else {
+                    0
+                };
+
+                let palette_color_id = pixel_data_1 | pixel_data_2;
+                let color: u8 = if use_palette_0 {
+                    self.obj_palette_0_map[palette_color_id as usize]
+                } else {
+                    self.obj_palette_1_map[palette_color_id as usize]
+                };
+
+                let x = sprite_x + x_pixel_in_tile;
+
+                if sprite_under_bg && color == 255 {
+                    continue;
+                }
+                self.set_pixel_color_next_screen_buffer(u32::from(x), color);
+            }
         }
     }
 
@@ -217,10 +311,6 @@ impl GPU {
         self.next_screen_buffer[base_addr] = color;
         self.next_screen_buffer[base_addr + 1] = color;
         self.next_screen_buffer[base_addr + 2] = color;
-    }
-
-    fn read_byte_video_ram(&self, addr: u16) -> u8 {
-        self.video_ram[(addr & 0x1FFF) as usize]
     }
 
     fn render_screen(&self) {
