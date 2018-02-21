@@ -61,23 +61,25 @@ impl Input {
     pub fn run_cycle(&mut self) {
         match self.key_data_receiver.try_recv() {
             Ok(key) => {
-                match key.key_type {
-                    KeyType::Up => self.up.is_down = key.is_down,
-                    KeyType::Down => self.down.is_down = key.is_down,
-                    KeyType::Left => self.left.is_down = key.is_down,
-                    KeyType::Right => self.right.is_down = key.is_down,
-                    KeyType::A => self.a.is_down = key.is_down,
-                    KeyType::B => self.b.is_down = key.is_down,
-                    KeyType::Select => self.select.is_down = key.is_down,
-                    KeyType::Start => self.start.is_down = key.is_down,
-                }
+                let changed = match key.key_type {
+                    KeyType::Up => if self.up.is_down != key.is_down { self.up.is_down = key.is_down; true } else { false },
+                    KeyType::Down => if self.down.is_down != key.is_down { self.down.is_down = key.is_down; true } else { false },
+                    KeyType::Left => if self.left.is_down != key.is_down { self.left.is_down = key.is_down; true } else { false },
+                    KeyType::Right => if self.right.is_down != key.is_down { self.right.is_down = key.is_down; true } else { false },
+                    KeyType::A => if self.a.is_down != key.is_down { self.a.is_down = key.is_down; true } else { false },
+                    KeyType::B => if self.b.is_down != key.is_down { self.b.is_down = key.is_down; true } else { false },
+                    KeyType::Select => if self.select.is_down != key.is_down { self.select.is_down = key.is_down; true } else { false },
+                    KeyType::Start => if self.start.is_down != key.is_down { self.start.is_down = key.is_down; true } else { false },
+                };
 
-                if key.is_down {
-                    self.interrupt |= 0x10;
-                    println!("KEY DOWN: {:?}", key.key_type);
-                }
+                if changed {
+                    if key.is_down {
+                        self.interrupt |= 0x10;
+                        println!("KEY DOWN: {:?}", key.key_type);
+                    }
 
-                self.update_io_register();
+                    self.update_io_register();
+                }
             },
             _ => ()
         }
@@ -89,7 +91,7 @@ impl Input {
 
         if self.io_register & 0x10 == 0 {
             // bit 4 is low, check R L U D keys
-            let row_res: u8 = self.row_0_keys().iter()
+            let row_res: u8 = self.col_1_keys().iter()
                 .filter(|key| !key.is_down)
                 .map(|key| key.key_type.value())
                 .fold(0, |acc, key_value| acc | key_value);
@@ -99,7 +101,7 @@ impl Input {
 
         if self.io_register & 0x20 == 0 {
             // bit 5 is low, check A B Se St keys
-            let row_res: u8 = self.row_1_keys().iter()
+            let row_res: u8 = self.col_0_keys().iter()
                 .filter(|key| !key.is_down)
                 .map(|key| key.key_type.value())
                 .fold(0, |acc, key_value| acc | key_value);
@@ -108,21 +110,21 @@ impl Input {
         }
     }
 
-    fn row_0_keys(&self) -> [&Key; 4] {
-        [
-            &self.up,
-            &self.down,
-            &self.left,
-            &self.right,
-        ]
-    }
-
-    fn row_1_keys(&self) -> [&Key; 4] {
+    fn col_0_keys(&self) -> [&Key; 4] {
         [
             &self.a,
             &self.b,
             &self.select,
             &self.start,
+        ]
+    }
+
+    fn col_1_keys(&self) -> [&Key; 4] {
+        [
+            &self.right,
+            &self.left,
+            &self.up,
+            &self.down,
         ]
     }
 }

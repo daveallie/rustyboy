@@ -63,8 +63,8 @@ impl Screen {
                                 Some(glutin::VirtualKeyCode::Right) => { let _ = key_sender.send(Key { key_type: KeyType::Right, is_down }); }
                                 Some(glutin::VirtualKeyCode::Z) => { let _ = key_sender.send(Key { key_type: KeyType::A, is_down }); }
                                 Some(glutin::VirtualKeyCode::X) => { let _ = key_sender.send(Key { key_type: KeyType::B, is_down }); }
-                                Some(glutin::VirtualKeyCode::RShift) => { let _ = key_sender.send(Key { key_type: KeyType::Select, is_down }); }
-                                Some(glutin::VirtualKeyCode::Return) => { let _ = key_sender.send(Key { key_type: KeyType::Start, is_down }); }
+                                Some(glutin::VirtualKeyCode::C) => { let _ = key_sender.send(Key { key_type: KeyType::Select, is_down }); }
+                                Some(glutin::VirtualKeyCode::V) => { let _ = key_sender.send(Key { key_type: KeyType::Start, is_down }); }
                                 Some(glutin::VirtualKeyCode::Q) => {
                                     if input.modifiers.ctrl || input.modifiers.logo {
                                         closed = true;

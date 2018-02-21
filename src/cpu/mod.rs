@@ -45,10 +45,10 @@ impl CPU {
             if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
                 if let Ok(_) = self.screen_exit_receiver.try_recv() { break }
 
-                let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
-                if time_since_last_set_start < time_for_n_cycles {
-                    thread::sleep(time_for_n_cycles - time_since_last_set_start);
-                }
+//                let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
+//                if time_since_last_set_start < time_for_n_cycles {
+//                    thread::sleep(time_for_n_cycles - time_since_last_set_start);
+//                }
 
                 start_of_last_n_cycles = Instant::now();
                 cycles_since_sleep = 0;
