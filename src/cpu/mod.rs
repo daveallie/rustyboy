@@ -19,7 +19,7 @@ impl CPU {
     pub const CLOCK_SPEED: u32 = 0x400_000_u32;
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4;
 
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>) -> Self {
         Self {
             reg: register::Registers::new(),
             mmu: mmu::MMU::new(cart_path, screen_data_sender),

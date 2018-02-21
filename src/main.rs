@@ -33,7 +33,7 @@ fn main() {
         None => panic!("You must pass a cart path as the first argument!")
     };
 
-    let (screen_data_sender, screen_data_receiver) = mpsc::sync_channel(1);
+    let (screen_data_sender, screen_data_receiver) = mpsc::channel();
 
     let cpu = CPU::new(&cart_path, screen_data_sender);
     let screen = Screen::new("Rustyboy", 4, screen_data_receiver);

@@ -26,7 +26,7 @@ pub struct MMU {
 }
 
 impl MMU {
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>) -> Self {
         let mut cart_data: Vec<u8> = Vec::new();
         Self::load_cart(cart_path, &mut cart_data);
 

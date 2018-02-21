@@ -19,14 +19,14 @@ pub struct GPU {
     win_x: u8,
     ly: u8,
     render_clock: u32,
-    screen_data_sender: mpsc::SyncSender<Vec<u8>>,
+    screen_data_sender: mpsc::Sender<Vec<u8>>,
     pub interrupt: u8,
 }
 
 impl GPU {
     pub const OAM_SIZE: usize = 0xA0;
 
-    pub fn new(screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
+    pub fn new(screen_data_sender: mpsc::Sender<Vec<u8>>) -> Self {
         Self {
             next_screen_buffer: vec![0_u8; (3 * Screen::WIDTH * Screen::HEIGHT) as usize],
             video_ram: [0_u8; VIDEO_RAM_SIZE],
