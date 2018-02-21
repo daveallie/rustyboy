@@ -257,9 +257,9 @@ impl GPU {
 
             for x_pixel_in_tile in 0..8_u8 {
                 let pixel_in_line_mask = if x_flip {
-                    1 << (7 - x_pixel_in_tile)
-                } else {
                     1 << x_pixel_in_tile
+                } else {
+                    1 << (7 - x_pixel_in_tile)
                 };
 
                 let pixel_data_1: u8 = if sprite_data_1 & pixel_in_line_mask > 0 {
