@@ -17,8 +17,9 @@ pub struct CPU {
 }
 
 impl CPU {
-    pub const CLOCK_SPEED: u32 = 0x400_000_u32;
-    pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4;
+    const CLOCK_SPEED: u32 = 0x400_000_u32; // 4_194_304
+    pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576
+    const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
 
     pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
         Self {
@@ -32,18 +33,33 @@ impl CPU {
     }
 
     pub fn main_loop(&mut self) {
-        let mut time_before_run: Instant;
-        let mut time_of_next_run: Instant = Instant::now();
+        let time_for_n_cycles = Duration::new(0, (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32);
+
+        let mut cycles_since_sleep: u32 = 0;
+        let mut start_of_last_n_cycles = Instant::now();
+//        let mut time_of_next_run: Instant = Instant::now();
+        let mut cycles_since_last_log: u32 = 0;
+        let mut time_of_next_log: Instant = Instant::now() + Duration::new(1, 0);
         loop {
-            time_before_run = Instant::now();
-            if time_before_run < time_of_next_run {
-                thread::sleep(time_of_next_run - time_before_run);
-                time_before_run = Instant::now();
+            if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
+                let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
+                if time_since_last_set_start < time_for_n_cycles {
+                    thread::sleep(time_for_n_cycles - time_since_last_set_start);
+                }
+
+                start_of_last_n_cycles = Instant::now();
+                cycles_since_sleep = 0;
             }
+
+            if time_of_next_log <= Instant::now() {
+                println!("RUNNING AT {}%", 100_f64 * f64::from(cycles_since_last_log) / f64::from(Self::CYCLE_SPEED));
+                time_of_next_log = Instant::now() + Duration::new(1, 0);
+                cycles_since_last_log = 0;
+            }
+
             let completed_cycles = self.run_cycle();
-            #[cfg_attr(feature="clippy", allow(cast_possible_truncation, cast_sign_loss))]
-            let time_until_next_run = Duration::new(0,  (1_000_000_000_f64 * f64::from(completed_cycles) / f64::from(Self::CLOCK_SPEED)) as u32);
-            time_of_next_run = time_before_run + time_until_next_run;
+            cycles_since_last_log += completed_cycles as u32;
+            cycles_since_sleep += completed_cycles as u32;
         }
     }
 
