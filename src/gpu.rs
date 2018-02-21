@@ -202,14 +202,14 @@ impl GPU {
             let (tile_line_data_1, tile_line_data_2) = (self.read_video_ram(tile_line_addr), self.read_video_ram(tile_line_addr + 1));
             let pixel_in_line_mask = 1 << bgx_pixel_in_tile;
             let pixel_data_1: u8 = if tile_line_data_1 & pixel_in_line_mask > 0 {
-                1
+                0b01
             } else {
-                0
+                0b00
             };
             let pixel_data_2: u8 = if tile_line_data_2 & pixel_in_line_mask > 0 {
-                2
+                0b10
             } else {
-                0
+                0b00
             };
 
             let palette_color_id = pixel_data_1 | pixel_data_2;
@@ -263,14 +263,14 @@ impl GPU {
                 };
 
                 let pixel_data_1: u8 = if sprite_data_1 & pixel_in_line_mask > 0 {
-                    1
+                    0b01
                 } else {
-                    0
+                    0b00
                 };
                 let pixel_data_2: u8 = if sprite_data_2 & pixel_in_line_mask > 0 {
-                    2
+                    0b10
                 } else {
-                    0
+                    0b00
                 };
 
                 let palette_color_id = pixel_data_1 | pixel_data_2;
@@ -323,18 +323,18 @@ impl GPU {
 
 fn build_palette_map(palette_layout: u8) -> [u8; 4] {
     [
-        color_from_dot_data(palette_layout & 0x11),
-        color_from_dot_data((palette_layout >> 2) & 0x11),
-        color_from_dot_data((palette_layout >> 4) & 0x11),
         color_from_dot_data(palette_layout >> 6),
+        color_from_dot_data((palette_layout >> 4) & 0b11),
+        color_from_dot_data((palette_layout >> 2) & 0b11),
+        color_from_dot_data(palette_layout & 0b11),
     ]
 }
 
 fn color_from_dot_data(dot_data: u8) -> u8 {
     match dot_data {
-        0x00 => 255,
-        0x01 => 192,
-        0x10 => 96,
+        0b11 => 255,
+        0b01 => 192,
+        0b10 => 96,
         _ => 0,
     }
 }
