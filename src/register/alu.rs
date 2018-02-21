@@ -104,4 +104,13 @@ impl Registers {
         self.set_flag(Flags::H, true);
         self.set_flag(Flags::N, false);
     }
+
+    pub fn alu_sla(&mut self, input: u8) -> u8 {
+        let result = input << 1;
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, input & 0x80 > 0);
+        self.set_flag(Flags::H, false);
+        self.set_flag(Flags::N, false);
+        result
+    }
 }

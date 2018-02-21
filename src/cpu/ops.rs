@@ -200,7 +200,7 @@ impl CPU {
                 self.mmu.write_byte(self.reg.get_hl_and_dec(), read_regs.a);
                 2
             }
-            0x33 => { // inc hl
+            0x33 => { // inc sp
                 self.reg.sp = read_regs.sp.wrapping_add(1);
                 2
             }
@@ -232,6 +232,10 @@ impl CPU {
             }
             0x39 => { // add sp to hl, store in sp
                 self.reg.alu_add_16_bit(read_regs.sp);
+                2
+            }
+            0x3A => { // write byte pointed by hl into a (and dec hl)
+                self.reg.a = self.mmu.read_byte(self.reg.get_hl_and_dec());
                 2
             }
             0x3C => { // inc a
@@ -444,6 +448,30 @@ impl CPU {
                 self.reg.l = read_regs.a;
                 1
             }
+            0x70 => { // load b into byte pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.b);
+                2
+            }
+            0x71 => { // load c into byte pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.c);
+                2
+            }
+            0x72 => { // load d into byte pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.d);
+                2
+            }
+            0x73 => { // load e into byte pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.e);
+                2
+            }
+            0x74 => { // load h into byte pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.h);
+                2
+            }
+            0x75 => { // load l into byte pointed by hl
+                self.mmu.write_byte(read_regs.get_hl(), read_regs.l);
+                2
+            }
             0x76 => { // halt
                 self.halting = true;
                 1
@@ -651,6 +679,11 @@ impl CPU {
                 self.push_stack(read_regs.get_bc());
                 4
             }
+            0xC6 => {
+                let next_byte = self.get_byte();
+                self.reg.alu_add(next_byte);
+                2
+            }
             0xC7 => { // push pc to stack and jump to 0x00
                 let old_pc = self.reg.pc;
                 self.push_stack(old_pc);
@@ -849,6 +882,11 @@ impl CPU {
                 self.push_stack(read_regs.get_af());
                 4
             }
+            0xF6 => { // or a and next byte, store in a
+                let next_byte = self.get_byte();
+                self.reg.alu_or(next_byte);
+                2
+            }
             0xF7 => { // push pc to stack and jump to 0x30
                 let old_pc = self.reg.pc;
                 self.push_stack(old_pc);
@@ -890,6 +928,40 @@ impl CPU {
         let code = self.get_byte();
 
         match code {
+            0x20 => { // shift b left one into carry
+                self.reg.b = self.reg.alu_sla(read_regs.b);
+                2
+            }
+            0x21 => { // shift c left one into carry
+                self.reg.c = self.reg.alu_sla(read_regs.c);
+                2
+            }
+            0x22 => { // shift d left one into carry
+                self.reg.d = self.reg.alu_sla(read_regs.d);
+                2
+            }
+            0x23 => { // shift e left one into carry
+                self.reg.e = self.reg.alu_sla(read_regs.e);
+                2
+            }
+            0x24 => { // shift h left one into carry
+                self.reg.h = self.reg.alu_sla(read_regs.h);
+                2
+            }
+            0x25 => { // shift l left one into carry
+                self.reg.l = self.reg.alu_sla(read_regs.l);
+                2
+            }
+            0x26 => { // shift byte pointed to by hl left one into carry
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr);
+                self.mmu.write_byte(addr, self.reg.alu_sla(value));
+                4
+            }
+            0x27 => { // shift a left one into carry
+                self.reg.a = self.reg.alu_sla(read_regs.a);
+                2
+            }
             0x30 => { // swap nibles of b https://www.geeksforgeeks.org/swap-two-nibbles-byte/
                 self.reg.b = self.reg.alu_nible_swap(read_regs.b);
                 2
