@@ -11,13 +11,14 @@ pub struct Screen {
     events_loop: glutin::EventsLoop,
     screen_data_receiver: mpsc::Receiver<Vec<u8>>,
     key_data_sender: mpsc::Sender<Key>,
+    screen_exit_sender: mpsc::Sender<()>,
 }
 
 impl Screen {
     pub const WIDTH: u32 = 160;
     pub const HEIGHT: u32 = 144;
 
-    pub fn new(title: &str, scale: u32, screen_data_receiver: mpsc::Receiver<Vec<u8>>, key_data_sender: mpsc::Sender<Key>) -> Self {
+    pub fn new(title: &str, scale: u32, screen_data_receiver: mpsc::Receiver<Vec<u8>>, key_data_sender: mpsc::Sender<Key>, screen_exit_sender: mpsc::Sender<()>) -> Self {
         let events_loop = glutin::EventsLoop::new();
         let window = glutin::WindowBuilder::new()
             .with_title(title)
@@ -39,6 +40,7 @@ impl Screen {
             events_loop,
             screen_data_receiver,
             key_data_sender,
+            screen_exit_sender,
         }
     }
 
@@ -85,6 +87,8 @@ impl Screen {
             // Sleep for 1/60th of a second
             thread::sleep(Duration::new(0, 16_666));
         }
+
+        self.screen_exit_sender.send(());
     }
 
     fn draw_data(&mut self, data: &[u8]) {

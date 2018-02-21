@@ -14,6 +14,7 @@ pub struct CPU {
     enable_interrupt_after: u8,
     interrupts_enabled: bool,
     halting: bool,
+    screen_exit_receiver: mpsc::Receiver<()>,
 }
 
 impl CPU {
@@ -21,7 +22,7 @@ impl CPU {
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576
     const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
 
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>, screen_exit_receiver: mpsc::Receiver<()>) -> Self {
         Self {
             reg: register::Registers::new(),
             mmu: mmu::MMU::new(cart_path, screen_data_sender, key_data_receiver),
@@ -29,6 +30,7 @@ impl CPU {
             enable_interrupt_after: 0,
             interrupts_enabled: true,
             halting: false,
+            screen_exit_receiver,
         }
     }
 
@@ -42,6 +44,8 @@ impl CPU {
         let mut time_of_next_log: Instant = Instant::now() + Duration::new(1, 0);
         loop {
             if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
+                if let Ok(_) = self.screen_exit_receiver.try_recv() { break }
+
                 let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
                 if time_since_last_set_start < time_for_n_cycles {
                     thread::sleep(time_for_n_cycles - time_since_last_set_start);
