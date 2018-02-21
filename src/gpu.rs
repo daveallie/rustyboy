@@ -231,11 +231,11 @@ impl GPU {
         };
 
         for sprite_id in 0..40_u16 {
-            let sprite_attr_addr = 0xFE00_u16 + (sprite_id * 4);
-            let sprite_y = self.read_video_ram(sprite_attr_addr).wrapping_sub(16);
-            let sprite_x = self.read_video_ram(sprite_attr_addr + 1).wrapping_sub(0x08);
-            let sprite_location = self.read_video_ram(sprite_attr_addr + 2);
-            let sprite_attributes = self.read_video_ram(sprite_attr_addr + 3);
+            let sprite_attr_addr = sprite_id * 4;
+            let sprite_y = self.read_oam(sprite_attr_addr).wrapping_sub(16);
+            let sprite_x = self.read_oam(sprite_attr_addr + 1).wrapping_sub(0x08);
+            let sprite_location = self.read_oam(sprite_attr_addr + 2);
+            let sprite_attributes = self.read_oam(sprite_attr_addr + 3);
 
             let sprite_under_bg = sprite_attributes & 0x80 > 0;
             let y_flip = sprite_attributes & 0x40 > 0;
