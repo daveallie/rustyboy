@@ -97,7 +97,25 @@ impl Registers {
     }
 
     pub fn alu_daa(&mut self) {
-        panic!("WTF IS THIS DAA SHIT")
+        let a = self.a;
+        let mut correction = 0;
+
+        if self.get_flag(Flags::H) || (!self.get_flag(Flags::N) && (a & 0x0F) > 0x11) {
+            correction |= 0x06;
+        }
+
+        if self.get_flag(Flags::C) || (!self.get_flag(Flags::N) && a > 0x99) {
+            correction |= 0x60;
+            self.set_flag(Flags::C, true);
+        }
+
+        let result = if self.get_flag(Flags::N) {
+            a.wrapping_sub(correction)
+        } else {
+            a.wrapping_add(correction)
+        };
+
+        self.set_flag(Flags::Z, result == 0);
     }
 
     pub fn alu_cpl(&mut self) {
