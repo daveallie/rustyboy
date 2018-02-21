@@ -28,6 +28,22 @@ impl Registers {
         self.a = result;
     }
 
+    pub fn alu_adc(&mut self, input: u8) {
+        let a = self.a;
+        let carry_bit = if self.get_flag(Flags::C) {
+            0x01
+        } else {
+            0x00
+        };
+
+        let result = a.wrapping_add(input).wrapping_add(carry_bit);
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::H, (a & 0x0F) + (input & 0x0F) + (carry_bit & 0x0F) > 0x0F);
+        self.set_flag(Flags::N, false);
+        self.set_flag(Flags::C, u16::from(0xFF - a) < (u16::from(input) + u16::from(carry_bit)));
+        self.a = result;
+    }
+
     pub fn alu_sub(&mut self, input: u8) {
         let a = self.a;
         let result = a.wrapping_sub(input);
@@ -36,6 +52,12 @@ impl Registers {
         self.set_flag(Flags::N, true);
         self.set_flag(Flags::C, a < input);
         self.a = result;
+    }
+
+    pub fn alu_cp(&mut self, input: u8) {
+        let old_a = self.a;
+        self.alu_sub(input);
+        self.a = old_a;
     }
 
     pub fn alu_add_16_bit(&mut self, input: u16) {
@@ -74,12 +96,6 @@ impl Registers {
         self.a = result;
     }
 
-    pub fn alu_cp(&mut self, input: u8) {
-        let temp_a = self.a;
-        self.alu_sub(input);
-        self.a = temp_a;
-    }
-
     pub fn alu_daa(&mut self) {
         panic!("WTF IS THIS DAA SHIT")
     }
@@ -109,6 +125,29 @@ impl Registers {
         let result = input << 1;
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::C, input & 0x80 > 0);
+        self.set_flag(Flags::H, false);
+        self.set_flag(Flags::N, false);
+        result
+    }
+
+    pub fn alu_srl(&mut self, input: u8) -> u8 {
+        let result = input >> 1;
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, input & 0x01 > 0);
+        self.set_flag(Flags::H, false);
+        self.set_flag(Flags::N, false);
+        result
+    }
+
+    pub fn alu_rlc(&mut self, input: u8) -> u8 {
+        let msb_was_set = input & 0x80 > 0;
+        let result = if msb_was_set {
+            input << 1 | 0x01
+        } else {
+            input << 1
+        };
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, msb_was_set);
         self.set_flag(Flags::H, false);
         self.set_flag(Flags::N, false);
         result

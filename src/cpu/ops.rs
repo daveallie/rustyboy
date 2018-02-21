@@ -38,6 +38,10 @@ impl CPU {
                 self.reg.b = self.get_byte();
                 2
             }
+            0x07 => { // rotate a left, old msb to carry
+                self.reg.a = self.reg.alu_rlc(read_regs.a);
+                1
+            }
             0x09 => { // add bc to hl, store in hl
                 self.reg.alu_add_16_bit(read_regs.get_bc());
                 2
@@ -97,6 +101,10 @@ impl CPU {
             }
             0x1A => { // load byte pointed to by de into a
                 self.reg.a = self.mmu.read_byte(read_regs.get_de());
+                2
+            }
+            0x1B => { // dec de
+                self.reg.set_de(read_regs.get_de().wrapping_sub(1));
                 2
             }
             0x1C => { // inc e
@@ -164,6 +172,10 @@ impl CPU {
             }
             0x2A => { // load value at hl address into a. inc hl
                 self.reg.a = self.mmu.read_byte(self.reg.get_hl_and_inc());
+                2
+            }
+            0x2B => { // dec hl
+                self.reg.set_hl(read_regs.get_hl().wrapping_sub(1));
                 2
             }
             0x2C => { // inc l
@@ -236,6 +248,10 @@ impl CPU {
             }
             0x3A => { // write byte pointed by hl into a (and dec hl)
                 self.reg.a = self.mmu.read_byte(self.reg.get_hl_and_dec());
+                2
+            }
+            0x3B => { // dec sp
+                self.reg.sp = read_regs.sp.wrapping_sub(1);
                 2
             }
             0x3C => { // inc a
@@ -545,6 +561,72 @@ impl CPU {
                 self.reg.alu_add(read_regs.a);
                 1
             }
+            0x88 => { // add a, b, and carry flag, store in a
+                self.reg.alu_adc(read_regs.b);
+                1
+            }
+            0x89 => { // add a, c, and carry flag, store in a
+                self.reg.alu_adc(read_regs.c);
+                1
+            }
+            0x8A => { // add a, d, and carry flag, store in a
+                self.reg.alu_adc(read_regs.d);
+                1
+            }
+            0x8B => { // add a, e, and carry flag, store in a
+                self.reg.alu_adc(read_regs.e);
+                1
+            }
+            0x8C => { // add a, h, and carry flag, store in a
+                self.reg.alu_adc(read_regs.h);
+                1
+            }
+            0x8D => { // add a, l, and carry flag, store in a
+                self.reg.alu_adc(read_regs.l);
+                1
+            }
+            0x8E => { // add a, byte pointed by hl, and carry flag, store in a
+                let value = self.mmu.read_byte(read_regs.get_hl());
+                self.reg.alu_adc(value);
+                1
+            }
+            0x8F => { // add a, a, and carry flag, store in a
+                self.reg.alu_adc(read_regs.a);
+                1
+            }
+            0x90 => { // sub b from a, store in a
+                self.reg.alu_sub(read_regs.b);
+                1
+            }
+            0x91 => { // sub c from a, store in a
+                self.reg.alu_sub(read_regs.c);
+                1
+            }
+            0x92 => { // sub d from a, store in a
+                self.reg.alu_sub(read_regs.d);
+                1
+            }
+            0x93 => { // sub e from a, store in a
+                self.reg.alu_sub(read_regs.e);
+                1
+            }
+            0x94 => { // sub h from a, store in a
+                self.reg.alu_sub(read_regs.h);
+                1
+            }
+            0x95 => { // sub l from a, store in a
+                self.reg.alu_sub(read_regs.l);
+                1
+            }
+            0x96 => { // sub byte pointed to by hl from a, store in a
+                let value = self.mmu.read_byte(read_regs.get_hl());
+                self.reg.alu_sub(value);
+                2
+            }
+            0x97 => { // sub a from a, store in a
+                self.reg.alu_sub(read_regs.a);
+                1
+            }
             0xEA => { // load a into into location pointed by next word
                 let addr = self.get_word();
                 self.mmu.write_byte(addr, read_regs.a);
@@ -606,6 +688,11 @@ impl CPU {
                 self.reg.alu_xor(read_regs.l);
                 1
             }
+            0xAE => { // xor a and byte pointed by hl, store in a
+                let value = self.mmu.read_byte(read_regs.get_hl());
+                self.reg.alu_xor(value);
+                2
+            }
             0xAF => { // xor a and a, store in a
                 self.reg.alu_xor(read_regs.a);
                 1
@@ -636,6 +723,39 @@ impl CPU {
             }
             0xB7 => { // or a and a, store in a
                 self.reg.alu_or(read_regs.a);
+                1
+            }
+            0xB8 => { // compare a and b
+                self.reg.alu_cp(read_regs.b);
+                1
+            }
+            0xB9 => { // compare a and c
+                self.reg.alu_cp(read_regs.c);
+                1
+            }
+            0xBA => { // compare a and d
+                self.reg.alu_cp(read_regs.d);
+                1
+            }
+            0xBB => { // compare a and e
+                self.reg.alu_cp(read_regs.e);
+                1
+            }
+            0xBC => { // compare a and h
+                self.reg.alu_cp(read_regs.h);
+                1
+            }
+            0xBD => { // compare a and l
+                self.reg.alu_cp(read_regs.l);
+                1
+            }
+            0xBE => { // compare a and byte pointed by hl
+                let value = self.mmu.read_byte(read_regs.get_hl());
+                self.reg.alu_cp(value);
+                2
+            }
+            0xBF => { // compare a and a
+                self.reg.alu_cp(read_regs.a);
                 1
             }
             0xC0 => { // load word off stack and move to that address if Z is reset
@@ -733,6 +853,11 @@ impl CPU {
                 self.reg.pc = self.get_word();
                 6
             }
+            0xCE => { // add a, next byte, and carry flag, store in a
+                let value = self.get_byte();
+                self.reg.alu_adc(value);
+                1
+            }
             0xCF => { // push pc to stack and jump to 0x08
                 let old_pc = self.reg.pc;
                 self.push_stack(old_pc);
@@ -776,6 +901,11 @@ impl CPU {
             0xD5 => { // push de onto stack
                 self.push_stack(read_regs.get_de());
                 4
+            }
+            0xD6 => { // sub next byte from a, store in a
+                let value = self.get_byte();
+                self.reg.alu_sub(value);
+                2
             }
             0xD7 => { // push pc to stack and jump to 0x10
                 let old_pc = self.reg.pc;
@@ -857,6 +987,11 @@ impl CPU {
                 let hl = read_regs.get_hl();
                 self.reg.pc = hl;
                 1
+            }
+            0xEE => { // xor a and next byte, store in a
+                let value = self.get_byte();
+                self.reg.alu_xor(value);
+                2
             }
             0xEF => { // push pc to stack and jump to 0x28
                 let old_pc = self.reg.pc;
@@ -994,6 +1129,40 @@ impl CPU {
             }
             0x37 => { // swap nibles of a https://www.geeksforgeeks.org/swap-two-nibbles-byte/
                 self.reg.a = self.reg.alu_nible_swap(read_regs.a);
+                2
+            }
+            0x38 => { // shift b right one into carry
+                self.reg.b = self.reg.alu_srl(read_regs.b);
+                2
+            }
+            0x39 => { // shift c right one into carry
+                self.reg.c = self.reg.alu_srl(read_regs.c);
+                2
+            }
+            0x3A => { // shift d right one into carry
+                self.reg.d = self.reg.alu_srl(read_regs.d);
+                2
+            }
+            0x3B => { // shift e right one into carry
+                self.reg.e = self.reg.alu_srl(read_regs.e);
+                2
+            }
+            0x3C => { // shift h right one into carry
+                self.reg.h = self.reg.alu_srl(read_regs.h);
+                2
+            }
+            0x3D => { // shift l right one into carry
+                self.reg.l = self.reg.alu_srl(read_regs.l);
+                2
+            }
+            0x3E => { // shift byte pointed to by hl right one into carry
+                let addr = read_regs.get_hl();
+                let value = self.mmu.read_byte(addr);
+                self.mmu.write_byte(addr, self.reg.alu_srl(value));
+                2
+            }
+            0x3F => { // shift a right one into carry
+                self.reg.a = self.reg.alu_srl(read_regs.a);
                 2
             }
             0x40 => { // test bit 0 in reg b

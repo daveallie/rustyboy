@@ -39,7 +39,6 @@ impl CPU {
 
         let mut cycles_since_sleep: u32 = 0;
         let mut start_of_last_n_cycles = Instant::now();
-//        let mut time_of_next_run: Instant = Instant::now();
         let mut cycles_since_last_log: u32 = 0;
         let mut time_of_next_log: Instant = Instant::now() + Duration::new(1, 0);
         loop {

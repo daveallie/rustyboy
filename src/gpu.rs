@@ -148,8 +148,6 @@ impl GPU {
             return
         }
 
-//        let log_out = self.ly == 9;
-
         let bg_tile_map_addr = self.bg_tile_map_addr();
         let bg_tile_data_addr = self.bg_tile_data_addr();
         let bgy = self.scy.wrapping_add(self.ly);
@@ -165,10 +163,6 @@ impl GPU {
 
             let tile_number_addr = bg_tile_map_addr + bgy_tile * 32 + bgx_tile;
             let tile_number: u8 = self.read_byte_video_ram(tile_number_addr);
-//            if log_out {
-//                println!("TILE_NUMBER_ADDR: 0x{:02X}", tile_number_addr);
-//                println!("TILE_NUMBER: {}", tile_number);
-//            }
 
             let tile_addr_offset = if bg_tile_data_addr == 0x8000 {
                 // regular reading
@@ -197,14 +191,6 @@ impl GPU {
 
             let palette_color_id = pixel_data_1 | pixel_data_2;
             let color: u8 = self.bg_palette_map[palette_color_id as usize];
-
-//            if log_out {
-//                println!("TILE_ADDR: 0x{:02X}", tile_addr);
-//                println!("BGY PIXEL: {}", bgy_pixel_in_tile);
-//                println!("PIXEL DATA 1: {}", pixel_data_1);
-//                println!("PIXEL DATA 1: {}", pixel_data_2);
-//                println!("COLOR: {}", color);
-//            }
 
             self.set_pixel_color_next_screen_buffer(x, color);
         }
