@@ -5,6 +5,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use register;
 use mmu;
+use input::Key;
 
 pub struct CPU {
     pub reg: register::Registers,
@@ -19,10 +20,10 @@ impl CPU {
     pub const CLOCK_SPEED: u32 = 0x400_000_u32;
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4;
 
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
         Self {
             reg: register::Registers::new(),
-            mmu: mmu::MMU::new(cart_path, screen_data_sender),
+            mmu: mmu::MMU::new(cart_path, screen_data_sender, key_data_receiver),
             disable_interrupt_after: 0,
             enable_interrupt_after: 0,
             interrupts_enabled: true,

@@ -34,9 +34,10 @@ fn main() {
     };
 
     let (screen_data_sender, screen_data_receiver) = mpsc::channel();
+    let (key_data_sender, key_data_receiver) = mpsc::channel();
 
-    let cpu = CPU::new(&cart_path, screen_data_sender);
-    let screen = Screen::new("Rustyboy", 4, screen_data_receiver);
+    let cpu = CPU::new(&cart_path, screen_data_sender, key_data_receiver);
+    let screen = Screen::new("Rustyboy", 4, screen_data_receiver, key_data_sender);
 
     run(cpu, screen);
 }

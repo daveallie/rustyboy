@@ -3,7 +3,7 @@ use std::io::Read;
 use std::sync::mpsc;
 use clock::Clock;
 use gpu::GPU;
-use input::Input;
+use input::{Input, Key};
 use serial::Serial;
 
 // Gameboy only needs 0x2000 working RAM
@@ -26,7 +26,7 @@ pub struct MMU {
 }
 
 impl MMU {
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
         let mut cart_data: Vec<u8> = Vec::new();
         Self::load_cart(cart_path, &mut cart_data);
 
@@ -37,7 +37,7 @@ impl MMU {
             gpu: GPU::new(screen_data_sender),
             serial: Serial::new(),
             clock: Clock::new(),
-            input: Input::new(),
+            input: Input::new(key_data_receiver),
             interrupt_flags: 0,
             interrupt_enabled: 0,
         }
@@ -51,6 +51,10 @@ impl MMU {
         self.clock.run_cycle(cpu_cycles);
         self.interrupt_flags |= self.clock.interrupt;
         self.clock.interrupt = 0;
+
+        self.input.run_cycle();
+        self.interrupt_flags |= self.input.interrupt;
+        self.input.interrupt = 0;
     }
 
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
