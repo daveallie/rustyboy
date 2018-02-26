@@ -246,13 +246,13 @@ impl GPU {
                 continue;
             }
 
-            let y_pixel_in_tile = if y_flip {
+            let y_pixel_in_tile = u16::from(if y_flip {
                 sprite_y + sprite_height - self.ly
             } else {
                 self.ly - sprite_y
-            } as u16;
+            });
 
-            let sprite_addr = 0x8000_u16 + (sprite_location as u16 * 16) + y_pixel_in_tile * 2;
+            let sprite_addr = 0x8000_u16 + (u16::from(sprite_location) * 16) + y_pixel_in_tile * 2;
             let (sprite_data_1, sprite_data_2) = (self.read_video_ram(sprite_addr), self.read_video_ram(sprite_addr + 1));
 
             for x_pixel_in_tile in 0..8_u8 {

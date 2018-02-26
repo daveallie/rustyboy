@@ -88,7 +88,7 @@ impl Screen {
             thread::sleep(Duration::new(0, 16_666));
         }
 
-        self.screen_exit_sender.send(());
+        let _ = self.screen_exit_sender.send(());
     }
 
     fn draw_data(&mut self, data: &[u8]) {
@@ -110,6 +110,7 @@ impl Screen {
         let width = 2 * i32::from(unsigned_width as u16);
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         let height = 2 * i32::from(unsigned_height as u16);
+        #[cfg_attr(feature="clippy", allow(cast_sign_loss))]
         let blit_target = glium::BlitTarget { left: 0, bottom: height as u32, width, height: -height };
         self.texture.as_surface().blit_whole_color_to(&target, &blit_target, glium::uniforms::MagnifySamplerFilter::Nearest);
         if let Err(e) = target.finish() {

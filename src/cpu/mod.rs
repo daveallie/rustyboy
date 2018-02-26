@@ -35,6 +35,7 @@ impl CPU {
     }
 
     pub fn main_loop(&mut self) {
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation, cast_sign_loss))]
         let time_for_n_cycles = Duration::new(0, (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32);
 
         let mut cycles_since_sleep: u32 = 0;
@@ -43,7 +44,7 @@ impl CPU {
         let mut time_of_next_log: Instant = Instant::now() + Duration::new(1, 0);
         loop {
             if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
-                if let Ok(_) = self.screen_exit_receiver.try_recv() { break }
+                if self.screen_exit_receiver.try_recv().is_ok() { break }
 
                 let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
                 if time_since_last_set_start < time_for_n_cycles {
@@ -60,9 +61,9 @@ impl CPU {
                 cycles_since_last_log = 0;
             }
 
-            let completed_cycles = self.run_cycle();
-            cycles_since_last_log += completed_cycles as u32;
-            cycles_since_sleep += completed_cycles as u32;
+            let completed_cycles = u32::from(self.run_cycle());
+            cycles_since_last_log += completed_cycles;
+            cycles_since_sleep += completed_cycles;
         }
     }
 

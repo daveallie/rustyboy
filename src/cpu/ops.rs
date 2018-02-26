@@ -1430,37 +1430,37 @@ impl CPU {
                 2
             }
             0x80 => { // reset bit 0 in reg b
-                self.reg.b = read_regs.b & !(1 << 0);
+                self.reg.b = read_regs.b & !1;
                 2
             }
             0x81 => { // reset bit 0 in reg c
-                self.reg.c = read_regs.c & !(1 << 0);
+                self.reg.c = read_regs.c & !1;
                 2
             }
             0x82 => { // reset bit 0 in reg d
-                self.reg.d = read_regs.d & !(1 << 0);
+                self.reg.d = read_regs.d & !1;
                 2
             }
             0x83 => { // reset bit 0 in reg e
-                self.reg.e = read_regs.e & !(1 << 0);
+                self.reg.e = read_regs.e & !1;
                 2
             }
             0x84 => { // reset bit 0 in reg h
-                self.reg.h = read_regs.h & !(1 << 0);
+                self.reg.h = read_regs.h & !1;
                 2
             }
             0x85 => { // reset bit 0 in reg l
-                self.reg.l = read_regs.l & !(1 << 0);
+                self.reg.l = read_regs.l & !1;
                 2
             }
             0x86 => { // reset bit 0 in byte (hl)
                 let addr = read_regs.get_hl();
-                let value = self.mmu.read_byte(addr) & !(1 << 0);
+                let value = self.mmu.read_byte(addr) & !1;
                 self.mmu.write_byte(addr, value);
                 4
             }
             0x87 => { // reset bit 0 in reg a
-                self.reg.a = read_regs.a & !(1 << 0);
+                self.reg.a = read_regs.a & !1;
                 2
             }
             0x88 => { // reset bit 1 in reg b
@@ -1702,37 +1702,37 @@ impl CPU {
                 2
             }
             0xC0 => { // set bit 0 in reg b
-                self.reg.b = read_regs.b | (1 << 0);
+                self.reg.b = read_regs.b | 1;
                 2
             }
             0xC1 => { // set bit 0 in reg c
-                self.reg.c = read_regs.c | (1 << 0);
+                self.reg.c = read_regs.c | 1;
                 2
             }
             0xC2 => { // set bit 0 in reg d
-                self.reg.d = read_regs.d | (1 << 0);
+                self.reg.d = read_regs.d | 1;
                 2
             }
             0xC3 => { // set bit 0 in reg e
-                self.reg.e = read_regs.e | (1 << 0);
+                self.reg.e = read_regs.e | 1;
                 2
             }
             0xC4 => { // set bit 0 in reg h
-                self.reg.h = read_regs.h | (1 << 0);
+                self.reg.h = read_regs.h | 1;
                 2
             }
             0xC5 => { // set bit 0 in reg l
-                self.reg.l = read_regs.l | (1 << 0);
+                self.reg.l = read_regs.l | 1;
                 2
             }
             0xC6 => { // set bit 0 in byte (hl)
                 let addr = read_regs.get_hl();
-                let value = self.mmu.read_byte(addr) | (1 << 0);
+                let value = self.mmu.read_byte(addr) | 1;
                 self.mmu.write_byte(addr, value);
                 4
             }
             0xC7 => { // set bit 0 in reg a
-                self.reg.a = read_regs.a | (1 << 0);
+                self.reg.a = read_regs.a | 1;
                 2
             }
             0xC8 => { // set bit 1 in reg b
