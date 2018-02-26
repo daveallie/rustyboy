@@ -96,11 +96,12 @@ impl Registers {
         self.a = result;
     }
 
+    // https://ehaskins.com/2018-01-30%20Z80%20DAA/
     pub fn alu_daa(&mut self) {
         let a = self.a;
         let mut correction = 0;
 
-        if self.get_flag(Flags::H) || (!self.get_flag(Flags::N) && (a & 0x0F) > 0x11) {
+        if self.get_flag(Flags::H) || (!self.get_flag(Flags::N) && (a & 0x0F) > 9) {
             correction |= 0x06;
         }
 
