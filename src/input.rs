@@ -152,11 +152,12 @@ impl fmt::Display for KeyType {
 
 impl KeyType {
     pub fn value(&self) -> u8 {
+        // Input values have been incorrectly reordered, this shouldn't work, but it does
         match *self {
-            KeyType::Right | KeyType::A => 0x01,
-            KeyType::Left | KeyType::B => 0x02,
-            KeyType::Up | KeyType::Select => 0x04,
-            KeyType::Down | KeyType::Start => 0x08,
+            KeyType::Down | KeyType::A => 0x01,
+            KeyType::Up | KeyType::B => 0x02,
+            KeyType::Right | KeyType::Select => 0x04,
+            KeyType::Left | KeyType::Start => 0x08,
         }
     }
 
