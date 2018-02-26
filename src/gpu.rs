@@ -7,11 +7,11 @@ pub struct GPU {
     next_screen_buffer: Vec<u8>,
     video_ram: [u8; VIDEO_RAM_SIZE],
     bg_palette: u8,
-    bg_palette_map: [u8; 4],
+    bg_palette_map: [(u8, u8, u8); 4],
     obj_palette_0: u8,
-    obj_palette_0_map: [u8; 4],
+    obj_palette_0_map: [(u8, u8, u8); 4],
     obj_palette_1: u8,
-    obj_palette_1_map: [u8; 4],
+    obj_palette_1_map: [(u8, u8, u8); 4],
     oam: [u8; GPU::OAM_SIZE], // Sprite attribute table
     lcd_control: u8,
     stat: u8,
@@ -213,9 +213,9 @@ impl GPU {
             };
 
             let palette_color_id = pixel_data_1 | pixel_data_2;
-            let color: u8 = self.bg_palette_map[palette_color_id as usize];
+            let colors: (u8, u8, u8) = self.bg_palette_map[palette_color_id as usize];
 
-            self.set_pixel_color_next_screen_buffer(x, color);
+            self.set_pixel_color_next_screen_buffer(x, colors);
         }
     }
 
@@ -274,7 +274,7 @@ impl GPU {
                 };
 
                 let palette_color_id = pixel_data_1 | pixel_data_2;
-                let color: u8 = if use_palette_0 {
+                let colors: (u8, u8, u8) = if use_palette_0 {
                     self.obj_palette_0_map[palette_color_id as usize]
                 } else {
                     self.obj_palette_1_map[palette_color_id as usize]
@@ -282,10 +282,10 @@ impl GPU {
 
                 let x = sprite_x + x_pixel_in_tile;
 
-                if sprite_under_bg && color == 255 {
+                if sprite_under_bg && palette_color_id == 0 {
                     continue;
                 }
-                self.set_pixel_color_next_screen_buffer(u32::from(x), color);
+                self.set_pixel_color_next_screen_buffer(u32::from(x), colors);
             }
         }
     }
@@ -306,11 +306,12 @@ impl GPU {
         }
     }
 
-    fn set_pixel_color_next_screen_buffer(&mut self, x_pixel: u32, color: u8) {
+    fn set_pixel_color_next_screen_buffer(&mut self, x_pixel: u32, colors: (u8, u8, u8)) {
         let base_addr = (u32::from(self.ly) * Screen::WIDTH + x_pixel) as usize * 3;
-        self.next_screen_buffer[base_addr] = color;
-        self.next_screen_buffer[base_addr + 1] = color;
-        self.next_screen_buffer[base_addr + 2] = color;
+        let (c1, c2, c3) = colors;
+        self.next_screen_buffer[base_addr] = c1;
+        self.next_screen_buffer[base_addr + 1] = c2;
+        self.next_screen_buffer[base_addr + 2] = c3;
     }
 
     fn render_screen(&self) {
@@ -321,20 +322,41 @@ impl GPU {
     }
 }
 
-fn build_palette_map(palette_layout: u8) -> [u8; 4] {
+fn build_palette_map(palette_layout: u8) -> [(u8, u8, u8); 4] {
     [
-        color_from_dot_data(palette_layout >> 6),
-        color_from_dot_data((palette_layout >> 4) & 0b11),
-        color_from_dot_data((palette_layout >> 2) & 0b11),
         color_from_dot_data(palette_layout & 0b11),
+        color_from_dot_data((palette_layout >> 2) & 0b11),
+        color_from_dot_data((palette_layout >> 4) & 0b11),
+        color_from_dot_data(palette_layout >> 6),
     ]
 }
 
-fn color_from_dot_data(dot_data: u8) -> u8 {
+// Black and white
+//fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
+//    match dot_data {
+//        0b00 => (255, 255, 255), // 255
+//        0b01 => (192, 192, 192), // 192
+//        0b10 => (105, 106, 106), // 96
+//        _ => (7, 9, 9), // 0
+//    }
+//}
+
+// Attempt at original gameboy colors
+fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
     match dot_data {
-        0b11 => 255,
-        0b01 => 192,
-        0b10 => 96,
-        _ => 0,
+        0b00 => (245, 250, 239), // 255
+        0b01 => (134, 194, 112), // 192
+        0b10 => (47, 105, 87), // 96
+        _ => (11, 25, 32), // 0
     }
 }
+
+// Orange palette
+//fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
+//    match dot_data {
+//        0b00 => (252, 232, 140), // 255
+//        0b01 => (220, 180, 92), // 192
+//        0b10 => (152, 124, 60), // 96
+//        _ => (76, 60, 28), // 0
+//    }
+//}
