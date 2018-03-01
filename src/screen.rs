@@ -45,38 +45,15 @@ impl Screen {
     }
 
     pub fn start_loop(&mut self) {
+        self.main_screen_loop();
+        let _ = self.screen_exit_sender.send(());
+    }
+
+    fn main_screen_loop(&mut self) {
         let mut closed = false;
-        let key_sender = self.key_data_sender.clone();
 
         while !closed {
-            self.events_loop.poll_events(|ev| {
-                if let glutin::Event::WindowEvent { event, .. } = ev {
-                    match event {
-                        glutin::WindowEvent::Closed => closed = true,
-                        glutin::WindowEvent::KeyboardInput { input, .. } => {
-                            let is_down = input.state == glutin::ElementState::Pressed;
-
-                            match input.virtual_keycode {
-                                Some(glutin::VirtualKeyCode::Up) => { let _ = key_sender.send(Key { key_type: KeyType::Up, is_down }); }
-                                Some(glutin::VirtualKeyCode::Down) => { let _ = key_sender.send(Key { key_type: KeyType::Down, is_down }); }
-                                Some(glutin::VirtualKeyCode::Left) => { let _ = key_sender.send(Key { key_type: KeyType::Left, is_down }); }
-                                Some(glutin::VirtualKeyCode::Right) => { let _ = key_sender.send(Key { key_type: KeyType::Right, is_down }); }
-                                Some(glutin::VirtualKeyCode::Z) => { let _ = key_sender.send(Key { key_type: KeyType::A, is_down }); }
-                                Some(glutin::VirtualKeyCode::X) => { let _ = key_sender.send(Key { key_type: KeyType::B, is_down }); }
-                                Some(glutin::VirtualKeyCode::C) => { let _ = key_sender.send(Key { key_type: KeyType::Select, is_down }); }
-                                Some(glutin::VirtualKeyCode::V) => { let _ = key_sender.send(Key { key_type: KeyType::Start, is_down }); }
-                                Some(glutin::VirtualKeyCode::Q) => {
-                                    if input.modifiers.ctrl || input.modifiers.logo {
-                                        closed = true;
-                                    }
-                                }
-                                _ => (),
-                            }
-                        }
-                        _ => ()
-                    }
-                }
-            });
+            closed = self.poll_for_window_events();
 
             match self.screen_data_receiver.try_recv() {
                 Ok(data) => self.draw_data(&*data),
@@ -87,8 +64,42 @@ impl Screen {
             // Sleep for 1/60th of a second
             thread::sleep(Duration::new(0, 16_666));
         }
+    }
 
-        let _ = self.screen_exit_sender.send(());
+    fn poll_for_window_events(&mut self) -> bool {
+        let mut closed = false;
+        let key_sender = self.key_data_sender.clone();
+
+        self.events_loop.poll_events(|ev| {
+            if let glutin::Event::WindowEvent { event, .. } = ev {
+                match event {
+                    glutin::WindowEvent::Closed => closed = true,
+                    glutin::WindowEvent::KeyboardInput { input, .. } => {
+                        let is_down = input.state == glutin::ElementState::Pressed;
+
+                        match input.virtual_keycode {
+                            Some(glutin::VirtualKeyCode::Up) => { let _ = key_sender.send(Key { key_type: KeyType::Up, is_down }); }
+                            Some(glutin::VirtualKeyCode::Down) => { let _ = key_sender.send(Key { key_type: KeyType::Down, is_down }); }
+                            Some(glutin::VirtualKeyCode::Left) => { let _ = key_sender.send(Key { key_type: KeyType::Left, is_down }); }
+                            Some(glutin::VirtualKeyCode::Right) => { let _ = key_sender.send(Key { key_type: KeyType::Right, is_down }); }
+                            Some(glutin::VirtualKeyCode::Z) => { let _ = key_sender.send(Key { key_type: KeyType::A, is_down }); }
+                            Some(glutin::VirtualKeyCode::X) => { let _ = key_sender.send(Key { key_type: KeyType::B, is_down }); }
+                            Some(glutin::VirtualKeyCode::C) => { let _ = key_sender.send(Key { key_type: KeyType::Select, is_down }); }
+                            Some(glutin::VirtualKeyCode::V) => { let _ = key_sender.send(Key { key_type: KeyType::Start, is_down }); }
+                            Some(glutin::VirtualKeyCode::Q) => {
+                                if input.modifiers.ctrl || input.modifiers.logo {
+                                    closed = true;
+                                }
+                            }
+                            _ => (),
+                        }
+                    }
+                    _ => ()
+                }
+            }
+        });
+
+        closed
     }
 
     fn draw_data(&mut self, data: &[u8]) {

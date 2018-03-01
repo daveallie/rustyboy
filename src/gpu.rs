@@ -332,24 +332,24 @@ fn build_palette_map(palette_layout: u8) -> [(u8, u8, u8); 4] {
 }
 
 // Black and white
-//fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
-//    match dot_data {
-//        0b00 => (255, 255, 255), // 255
-//        0b01 => (192, 192, 192), // 192
-//        0b10 => (105, 106, 106), // 96
-//        _ => (7, 9, 9), // 0
-//    }
-//}
-
-// Attempt at original gameboy colors
 fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
     match dot_data {
-        0b00 => (245, 250, 239), // 255
-        0b01 => (134, 194, 112), // 192
-        0b10 => (47, 105, 87), // 96
-        _ => (11, 25, 32), // 0
+        0b00 => (255, 255, 255), // 255
+        0b01 => (192, 192, 192), // 192
+        0b10 => (105, 106, 106), // 96
+        _ => (7, 9, 9), // 0
     }
 }
+
+// Attempt at original gameboy colors
+//fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
+//    match dot_data {
+//        0b00 => (245, 250, 239), // 255
+//        0b01 => (134, 194, 112), // 192
+//        0b10 => (47, 105, 87), // 96
+//        _ => (11, 25, 32), // 0
+//    }
+//}
 
 // Orange palette
 //fn color_from_dot_data(dot_data: u8) -> (u8, u8, u8) {
