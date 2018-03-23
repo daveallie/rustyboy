@@ -2,7 +2,26 @@
 
 Gameboy emulator written in Rust.
 
-## Resources
+## About
+
+Rustyboy is nothing groundbreaking, if that's what you were looking for, then sorry to disappoint.
+This doesn't do anything new or innovative, people have emulated the Gameboy in more performant ways using less 
+performant languages. This project exists as a challenge to myself, could I build a Gameboy that runs anything?
+
+## Goals
+- Run Tetris
+- Run Dr. Mario
+- Run Pokemon Red
+
+### Stretch
+- Sound
+- Gameboy Color support
+
+### Current focus
+- Get ramdomisation working
+- Remove weird input lag
+
+## Resources 
 
 - http://clrhome.org/table/
 - http://gbdev.gg8.se/wiki/articles/CPU_Comparision_with_Z80
