@@ -38,7 +38,7 @@ impl Registers {
 
         let result = a.wrapping_add(input).wrapping_add(carry_bit);
         self.set_flag(Flags::Z, result == 0);
-        self.set_flag(Flags::H, (a & 0x0F) + (input & 0x0F) + (carry_bit & 0x0F) > 0x0F);
+        self.set_flag(Flags::H, (a & 0x0F) + (input & 0x0F) + carry_bit > 0x0F);
         self.set_flag(Flags::N, false);
         self.set_flag(Flags::C, u16::from(0xFF - a) < (u16::from(input) + u16::from(carry_bit)));
         self.a = result;
@@ -51,6 +51,22 @@ impl Registers {
         self.set_flag(Flags::H, (a & 0x0F) < (input & 0x0F));
         self.set_flag(Flags::N, true);
         self.set_flag(Flags::C, a < input);
+        self.a = result;
+    }
+
+    pub fn alu_sbc(&mut self, input: u8) {
+        let a = self.a;
+        let carry_bit = if self.get_flag(Flags::C) {
+            0x01
+        } else {
+            0x00
+        };
+
+        let result = a.wrapping_sub(input).wrapping_sub(carry_bit);
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::H, (a & 0x0F) < ((input & 0x0F) + carry_bit));
+        self.set_flag(Flags::N, true);
+        self.set_flag(Flags::C, u16::from(a) < (u16::from(input) + u16::from(carry_bit)));
         self.a = result;
     }
 
@@ -67,6 +83,14 @@ impl Registers {
         self.set_flag(Flags::N, false);
         self.set_flag(Flags::C, 0xFFFF - hl < input);
         self.set_hl(result);
+    }
+
+    pub fn alu_add_16_and_8(&mut self, input16: u16, input8: u16) -> u16 {
+        self.set_flag(Flags::N, false);
+        self.set_flag(Flags::Z, false);
+        self.set_flag(Flags::H, (input16 & 0x000F) + (input8 & 0x000F) > 0x000F);
+        self.set_flag(Flags::C, (input16 & 0x00FF) + (input8 & 0x00FF) > 0x00FF);
+        input16.wrapping_add(input8)
     }
 
     pub fn alu_or(&mut self, input: u8) {
@@ -170,5 +194,28 @@ impl Registers {
         self.set_flag(Flags::H, false);
         self.set_flag(Flags::N, false);
         result
+    }
+
+    pub fn alu_rr(&mut self, input: u8) -> u8 {
+        let result = if self.get_flag(Flags::C) {
+            input >> 1 | 0x80
+        } else {
+            input >> 1
+        };
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, input & 0x01 > 0);
+        self.set_flag(Flags::H, false);
+        self.set_flag(Flags::N, false);
+        result
+    }
+
+    pub fn alu_rrca(&mut self) {
+        let a = self.a;
+        let result = a >> 1;
+        self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::C, a & 0x01 > 0);
+        self.set_flag(Flags::H, false);
+        self.set_flag(Flags::N, false);
+        self.a = result;
     }
 }
