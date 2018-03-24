@@ -54,7 +54,7 @@ impl Registers {
         let second_byte = (value & 0x00FF) as u8;
 
         self.a = first_byte;
-        self.f = second_byte;
+        self.f = second_byte & 0xF0; // Don't care about the last nibble
     }
 
     pub fn get_af(&self) -> u16 {
