@@ -788,6 +788,7 @@ impl CPU {
                 let new_pc = self.reg.pc + 2;
 
                 if self.reg.get_flag(Flags::Z) {
+                    self.reg.pc = new_pc;
                     2
                 } else {
                     self.push_stack(new_pc);

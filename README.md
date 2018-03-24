@@ -18,6 +18,7 @@ performant languages. This project exists as a challenge to myself, could I buil
 - Gameboy Color support
 
 ### Current focus
+- Implement all CPU instructions
 - Get ramdomisation working
 - Remove weird input lag
 
