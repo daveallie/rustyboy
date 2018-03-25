@@ -56,9 +56,8 @@ impl MMU {
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
     pub fn read_byte(&self, addr: u16) -> u8 {
         match addr {
-            0x0000...0x7FFF => self.mbc.read_byte(addr), // ROM
+            0x0000...0x7FFF | 0xA000...0xBFFF => self.mbc.read_byte(addr), // ROM and cart RAM
             0x8000...0x9FFF => self.gpu.read_video_ram(addr), // Load from GPU
-            0xA000...0xBFFF => panic!("MMU ERROR: Load from cart RAM not implemented"), // Load from cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize], // Working RAM
             0xFE00...0xFE9F => self.gpu.read_oam(addr), // Graphics - sprite information
             0xFF00 => self.input.read(), // Input read
@@ -82,9 +81,8 @@ impl MMU {
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
     pub fn write_byte(&mut self, addr: u16, value: u8) {
         match addr {
-            0x0000...0x7FFF => self.mbc.write_byte(addr, value), // ROM
+            0x0000...0x7FFF | 0xA000...0xBFFF => self.mbc.write_byte(addr, value), // ROM and cart RAM
             0x8000...0x9FFF => self.gpu.write_video_ram(addr, value), // Write to GPU
-            0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Write to cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize] = value, // Working RAM
             0xFE00...0xFE9F => self.gpu.write_oam(addr, value), // Graphics - sprite information
             0xFF00 => self.input.write(value), // Input write

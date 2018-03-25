@@ -1,0 +1,85 @@
+use mbc::MBC;
+
+// http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers#MBC1_.28max_2MByte_ROM_and.2For_32KByte_RAM.29
+
+pub struct MBC1 {
+    cart_data: Vec<u8>,
+    ram: Vec<u8>,
+    ram_available: bool,
+    ram_enabled: bool,
+    rom_bank: u8,
+    ram_bank: u8,
+    rom_banking_mode: bool,
+}
+
+impl MBC1 {
+    pub fn new(cart_data: Vec<u8>, ram_available: bool) -> Self {
+        Self {
+            cart_data,
+            ram: vec![],
+            ram_available,
+            ram_enabled: false,
+            rom_bank: 1,
+            ram_bank: 0,
+            rom_banking_mode: true,
+        }
+    }
+
+    fn adjusted_rom_addr(&self, addr: u16) -> usize {
+        if addr < 0x4000 {
+            addr as usize
+        } else {
+            (addr + 0x4000 * u16::from(self.rom_bank - 1)) as usize
+        }
+    }
+}
+
+impl MBC for MBC1 {
+    fn read_byte(&self, addr: u16) -> u8 {
+        match addr {
+            0x0000...0x7FFF => self.cart_data[self.adjusted_rom_addr(addr)],
+            0xA000...0xBFFF => {
+                if !self.ram_enabled {
+                    panic!("Attempting to read external ram, which isn't enabled!");
+                }
+                unimplemented!();
+            },
+            _ => unreachable!("Tried to read non-existent mbc address"),
+        }
+    }
+
+    fn write_byte(&mut self, addr: u16, value: u8) {
+        match addr {
+            0x0000...0x1FFF => {
+                if !self.ram_available {
+                    panic!("Attempting to set external ram enabled, when not available!");
+                }
+                self.ram_enabled = value & 0x0F == 0x0A;
+            },
+            0x2000...0x3FFF => {
+                let rom_bank = value & 0x1F;
+                self.rom_bank = match rom_bank {
+                    0x00 | 0x20 | 0x40 | 0x60 => rom_bank + 1,
+                    _ => rom_bank,
+                };
+            },
+            0x4000...0x5FFF => {
+                let bits = value & 0x03;
+                if self.rom_banking_mode {
+                    self.rom_bank = (self.rom_bank & 0x1F) | (bits << 5);
+                } else {
+                    self.ram_bank = bits;
+                }
+            },
+            0x6000...0x7FFF => self.rom_banking_mode = value == 0,
+            0xA000...0xBFFF => {
+                if !self.ram_enabled {
+                    panic!("Attempting to write external ram, which isn't enabled!");
+                }
+                unimplemented!();
+            },
+            _ => unreachable!("Tried to write non-existent mbc address"),
+        }
+        self.cart_data[addr as usize] = value;
+    }
+}
