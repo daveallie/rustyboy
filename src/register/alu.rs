@@ -132,6 +132,8 @@ impl Registers {
         if self.get_flag(Flags::C) || (!self.get_flag(Flags::N) && a > 0x99) {
             correction |= 0x60;
             self.set_flag(Flags::C, true);
+        } else {
+            self.set_flag(Flags::C, false);
         }
 
         let result = if self.get_flag(Flags::N) {
@@ -140,7 +142,9 @@ impl Registers {
             a.wrapping_add(correction)
         };
 
+        self.a = result;
         self.set_flag(Flags::Z, result == 0);
+        self.set_flag(Flags::H, false);
     }
 
     pub fn alu_cpl(&mut self) {
