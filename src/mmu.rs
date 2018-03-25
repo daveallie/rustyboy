@@ -1,10 +1,9 @@
-use std::fs::File;
-use std::io::Read;
 use std::sync::mpsc;
 use clock::Clock;
 use gpu::GPU;
 use input::{Input, Key};
 use serial::Serial;
+use mbc::{self, MBC};
 
 // Gameboy only needs 0x2000 working RAM
 // In the future if CGB support is needed,
@@ -14,7 +13,7 @@ const WRAM_SIZE: usize = 0x2000;
 const HRAM_SIZE: usize = 0x80;
 
 pub struct MMU {
-    rom: Vec<u8>,
+    mbc: Box<MBC>,
     wram: [u8; WRAM_SIZE], // Working RAM
     hram: [u8; HRAM_SIZE], // High RAM
     gpu: GPU,
@@ -27,11 +26,8 @@ pub struct MMU {
 
 impl MMU {
     pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
-        let mut cart_data: Vec<u8> = Vec::new();
-        Self::load_cart(cart_path, &mut cart_data);
-
         Self {
-            rom: cart_data,
+            mbc: mbc::new(cart_path),
             wram: [0_u8; WRAM_SIZE],
             hram: [0_u8; HRAM_SIZE],
             gpu: GPU::new(screen_data_sender),
@@ -60,7 +56,7 @@ impl MMU {
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
     pub fn read_byte(&self, addr: u16) -> u8 {
         match addr {
-            0x0000...0x7FFF => self.rom[addr as usize], // ROM
+            0x0000...0x7FFF => self.mbc.read_byte(addr), // ROM
             0x8000...0x9FFF => self.gpu.read_video_ram(addr), // Load from GPU
             0xA000...0xBFFF => panic!("MMU ERROR: Load from cart RAM not implemented"), // Load from cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize], // Working RAM
@@ -86,7 +82,7 @@ impl MMU {
     // http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
     pub fn write_byte(&mut self, addr: u16, value: u8) {
         match addr {
-            0x0000...0x7FFF => self.rom[addr as usize] = value, // ROM
+            0x0000...0x7FFF => self.mbc.write_byte(addr, value), // ROM
             0x8000...0x9FFF => self.gpu.write_video_ram(addr, value), // Write to GPU
             0xA000...0xBFFF => panic!("MMU ERROR: Write to cart RAM not implemented"), // Write to cartridge RAM
             0xC000...0xFDFF => self.wram[(addr & 0x1FFF) as usize] = value, // Working RAM
@@ -128,18 +124,6 @@ impl MMU {
         for i in 0..(GPU::OAM_SIZE as u16) {
             let value = self.read_byte(actual_dma_start + i);
             self.gpu.write_oam(i, value);
-        }
-    }
-
-    fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
-        let mut file = match File::open(cart_path) {
-            Ok(f) => f,
-            Err(e) => panic!("Failed to open file from {}: {}", cart_path, e),
-        };
-
-        match file.read_to_end(buffer) {
-            Ok(_) => println!("ROM loaded from {}", &cart_path),
-            Err(e) => panic!("Failed to read file from {}: {}", cart_path, e),
         }
     }
 }

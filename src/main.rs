@@ -13,6 +13,7 @@ mod clock;
 mod cpu;
 mod gpu;
 mod input;
+mod mbc;
 mod mmu;
 mod register;
 mod screen;

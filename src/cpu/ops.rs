@@ -76,7 +76,6 @@ impl CPU {
                 1
             }
             0x10 => { // STOP
-                // TODO: Implement
                 1
             }
             0x11 => { // load word into de
