@@ -260,7 +260,7 @@ impl Registers {
 
     // Rotate n right through Carry flag.
     pub fn alu_rr(&mut self, input: u8) -> u8 {
-        let lsb_was_set = input & 0x80 > 0;
+        let lsb_was_set = input & 0x01 > 0;
         let result = if self.get_flag(Flags::C) {
             input >> 1 | 0x80
         } else {
