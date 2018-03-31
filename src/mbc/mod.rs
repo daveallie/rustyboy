@@ -1,10 +1,12 @@
 mod rom;
 mod mbc1;
+mod mbc2;
 
 use std::fs::File;
 use std::io::Read;
 use mbc::rom::ROM;
 use mbc::mbc1::MBC1;
+use mbc::mbc2::MBC2;
 
 // http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header#0147_-_Cartridge_Type
 /*
@@ -45,6 +47,7 @@ pub fn new(cart_path: &str) -> Box<MBC> {
         0x00 => Box::new(ROM::new(cart_data)),
         0x01 => Box::new(MBC1::new(cart_data, false, ram_size)),
         0x02 | 0x03 => Box::new(MBC1::new(cart_data, true, ram_size)),
+        0x05 | 0x06 => Box::new(MBC2::new(cart_data)),
         _ => panic!("Unknown cartridge type: 0x{:X}", cartridge_type),
     }
 }
