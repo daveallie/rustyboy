@@ -274,13 +274,18 @@ impl GPU {
                 };
 
                 let palette_color_id = pixel_data_1 | pixel_data_2;
+                if palette_color_id == 0 {
+                    // transparent
+                    continue;
+                }
+
                 let colors: (u8, u8, u8) = if use_palette_0 {
                     self.obj_palette_0_map[palette_color_id as usize]
                 } else {
                     self.obj_palette_1_map[palette_color_id as usize]
                 };
 
-                let x = sprite_x + x_pixel_in_tile;
+                let x = sprite_x.wrapping_add(x_pixel_in_tile);
 
                 if sprite_under_bg && palette_color_id == 0 {
                     continue;
