@@ -1046,9 +1046,8 @@ impl CPU {
                 8
             }
             0xE8 => { // add next byte to stack pointer
-                #[cfg_attr(feature="clippy", allow(cast_sign_loss, cast_possible_wrap))]
-                let next_byte = i16::from(self.get_byte() as i8) as u16;
-                let result = self.reg.alu_add_16_and_8(read_regs.sp, next_byte);
+                let signed_byte = self.get_signed_byte();
+                let result = self.reg.alu_add_16_and_8(read_regs.sp, signed_byte);
                 self.reg.sp = result;
                 4
             }
@@ -1108,9 +1107,8 @@ impl CPU {
                 8
             }
             0xF8 => { // load stack pointer and next byte sum into hl
-                #[cfg_attr(feature="clippy", allow(cast_sign_loss, cast_possible_wrap))]
-                let next_byte = i16::from(self.get_byte() as i8) as u16;
-                let result = self.reg.alu_add_16_and_8(read_regs.sp, next_byte);
+                let signed_byte = self.get_signed_byte();
+                let result = self.reg.alu_add_16_and_8(read_regs.sp, signed_byte);
                 self.reg.set_hl(result);
                 3
             }

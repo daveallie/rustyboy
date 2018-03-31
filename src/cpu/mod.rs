@@ -145,6 +145,12 @@ impl CPU {
         byte
     }
 
+    fn get_signed_byte(&mut self) -> i8 {
+        #[cfg_attr(feature="clippy", allow(cast_sign_loss, cast_possible_wrap))]
+        let signed_byte = self.get_byte() as i8;
+        signed_byte
+    }
+
     fn get_word(&mut self) -> u16 {
         let word = self.mmu.read_word(self.reg.pc);
         self.reg.pc += 2;

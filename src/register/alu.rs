@@ -127,23 +127,17 @@ impl Registers {
         self.set_hl(result);
     }
 
-    // Add n to SP
-    pub fn alu_add_sp(&mut self, input: u16) {
-        let sp = self.sp;
-        let result = sp.wrapping_add(input);
-        self.set_flag(Flags::H, (sp & 0x07FF) + (input & 0x07FF) > 0x07FF);
-        self.set_flag(Flags::N, false);
-        self.set_flag(Flags::C, 0xFFFF - sp < input);
-        self.set_hl(result);
-    }
-
     // Add 16 bit number and 8 bit number
-    pub fn alu_add_16_and_8(&mut self, input16: u16, input8: u16) -> u16 {
+    pub fn alu_add_16_and_8(&mut self, input16: u16, input8: i8) -> u16 {
+        let input16_adj = i32::from(input16);
+        let input8_adj = i32::from(input8);
+        let result = input16_adj.wrapping_add(input8_adj);
+
         self.set_flag(Flags::N, false);
         self.set_flag(Flags::Z, false);
-        self.set_flag(Flags::H, (input16 & 0x000F) + (input8 & 0x000F) > 0x000F);
-        self.set_flag(Flags::C, (input16 & 0x00FF) + (input8 & 0x00FF) > 0x00FF);
-        input16.wrapping_add(input8)
+        self.set_flag(Flags::H, (input16_adj ^ input8_adj ^ result) & 0x10 != 0);
+        self.set_flag(Flags::C, (input16_adj ^ input8_adj ^ result) & 0x100 != 0);
+        result as u16
     }
 
     // --------------- MISCELLANEOUS ---------------
