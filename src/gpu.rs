@@ -20,6 +20,7 @@ pub struct GPU {
     win_y: u8,
     win_x: u8,
     ly: u8,
+    lyc: u8,
     render_clock: u32,
     screen_data_sender: mpsc::SyncSender<Vec<u8>>,
     pub interrupt: u8,
@@ -46,6 +47,7 @@ impl GPU {
             win_y: 0,
             win_x: 0,
             ly: 0,
+            lyc: 0,
             render_clock: 0,
             screen_data_sender,
             interrupt: 0,
@@ -87,6 +89,7 @@ impl GPU {
             0xFF42 => self.scy,
             0xFF43 => self.scx,
             0xFF44 => self.ly,
+            0xFF45 => self.lyc,
             0xFF46 => unreachable!("DMA Address is write only"),
             0xFF47 => self.bg_palette,
             0xFF48 => self.obj_palette_0,
@@ -104,6 +107,7 @@ impl GPU {
             0xFF42 => self.scy = value,
             0xFF43 => self.scx = value,
             0xFF44 => (), // read only
+            0xFF45 => self.lyc = value,
             0xFF46 => unreachable!("DMA write handled in mmu.rs"),
             0xFF47 => {
                 self.bg_palette = value;
@@ -158,6 +162,10 @@ impl GPU {
 
     fn increment_line(&mut self) {
         self.ly = (self.ly + 1) % 154;
+        if self.stat & 0x40 > 0 && self.ly == self.lyc {
+            self.interrupt |= 0x02;
+        }
+
         if self.ly >= 144 { // V-Blank
             if self.ly == 144 {
                 self.interrupt |= 0x01; // Mark V-Blank interrupt
