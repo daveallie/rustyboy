@@ -8,6 +8,7 @@ pub struct Debugger {
     debugging: bool,
     debug_after_cycles_enabled: bool,
     debug_after_cycles: u32,
+    output: bool,
     cpu: cpu::CPU,
     reg_break_points: Vec<RegBreakPoint>,
 }
@@ -24,6 +25,7 @@ impl Debugger {
             debugging: false,
             debug_after_cycles_enabled: debug_after_cycles.is_some(),
             debug_after_cycles: debug_after_cycles.unwrap_or(0),
+            output: true,
             cpu,
             reg_break_points: vec![],
         }
@@ -31,6 +33,11 @@ impl Debugger {
 
     pub fn run(&mut self) {
         loop {
+            if self.output {
+                print!("{} ", self.current_steps);
+                let addr = self.cpu.reg.pc;
+                println!("instr: 0x{:X} -- opcode: 0x{:X}", addr, self.cpu.mmu.read_byte(addr));
+            }
             self.cpu.run_cycle();
             self.current_steps += 1;
             if self.should_stop() {
@@ -159,6 +166,9 @@ impl Debugger {
                 let addr = read_num(words.next().unwrap_or("0")) as u16;
                 output(&format!("0x{:X}\n", self.cpu.mmu.read_word(addr)));
             },
+            Some("out") => {
+                self.output = words.next().unwrap_or("on") == "on";
+            }
             Some("dump") => self.dump(words.next().unwrap_or("mem_dump")),
             Some("exit") => process::exit(1),
             _ => output("Unknown command!\n")

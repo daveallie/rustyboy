@@ -6,9 +6,6 @@ impl CPU {
         let read_regs = self.reg;
         let code = self.get_byte();
 
-        #[cfg(feature = "debugger")]
-        println!("instr: 0x{:X} -- opcode: 0x{:X}", read_regs.pc, code);
-
         match code {
             0x00 => { // nop
                 1
