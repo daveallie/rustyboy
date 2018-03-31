@@ -34,7 +34,7 @@ fn main() {
         None => panic!("You must pass a cart path as the first argument!")
     };
 
-    let (screen_data_sender, screen_data_receiver) = mpsc::channel();
+    let (screen_data_sender, screen_data_receiver) = mpsc::sync_channel(1);
     let (key_data_sender, key_data_receiver) = mpsc::channel();
     let (screen_exit_sender, screen_exit_receiver) = mpsc::channel();
 

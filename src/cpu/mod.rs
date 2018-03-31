@@ -22,7 +22,7 @@ impl CPU {
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576
     const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
 
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>, screen_exit_receiver: mpsc::Receiver<()>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>, screen_exit_receiver: mpsc::Receiver<()>) -> Self {
         Self {
             reg: register::Registers::new(),
             mmu: mmu::MMU::new(cart_path, screen_data_sender, key_data_receiver),

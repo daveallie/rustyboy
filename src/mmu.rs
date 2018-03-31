@@ -25,7 +25,7 @@ pub struct MMU {
 }
 
 impl MMU {
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::Sender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
         Self {
             mbc: mbc::new(cart_path),
             wram: [0_u8; WRAM_SIZE],
