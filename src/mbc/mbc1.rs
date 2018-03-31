@@ -13,10 +13,16 @@ pub struct MBC1 {
 }
 
 impl MBC1 {
-    pub fn new(cart_data: Vec<u8>, ram_available: bool) -> Self {
+    pub fn new(cart_data: Vec<u8>, ram_available: bool, ram_size: usize) -> Self {
+        let ram = if ram_available {
+            vec![0; ram_size]
+        } else {
+            vec![]
+        };
+
         Self {
             cart_data,
-            ram: vec![],
+            ram,
             ram_available,
             ram_enabled: false,
             rom_bank: 1,
@@ -29,8 +35,12 @@ impl MBC1 {
         if addr < 0x4000 {
             addr as usize
         } else {
-            (addr + 0x4000 * u16::from(self.rom_bank - 1)) as usize
+            addr as usize + (self.rom_bank as usize - 1) * 0x4000
         }
+    }
+
+    fn adjusted_ram_addr(&self, addr: u16) -> usize {
+        (addr as usize & 0x1FFF) + (self.ram_bank as usize * 0x1FFF)
     }
 }
 
@@ -42,7 +52,7 @@ impl MBC for MBC1 {
                 if !self.ram_enabled {
                     panic!("Attempting to read external ram, which isn't enabled!");
                 }
-                unimplemented!();
+                self.ram[self.adjusted_ram_addr(addr)]
             },
             _ => unreachable!("Tried to read non-existent mbc address"),
         }
@@ -76,7 +86,8 @@ impl MBC for MBC1 {
                 if !self.ram_enabled {
                     panic!("Attempting to write external ram, which isn't enabled!");
                 }
-                unimplemented!();
+                let adj_addr = self.adjusted_ram_addr(addr);
+                self.ram[adj_addr] = value;
             },
             _ => unreachable!("Tried to write non-existent mbc address"),
         }

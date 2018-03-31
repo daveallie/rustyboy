@@ -31,9 +31,20 @@ pub fn new(cart_path: &str) -> Box<MBC> {
     load_cart(cart_path, &mut cart_data);
     let cartridge_type = cart_data[0x147];
 
+    let ram_size: usize = match cart_data[0x149] {
+        0x00 => 0,
+        0x01 => 0x800, // 2_048
+        0x02 => 0x2000, // 8_192
+        0x03 => 0x8000, // 32_768
+        0x04 => 0x2_0000, // 131_072
+        0x05 => 0x1_0000, // 65_536
+        _ => unreachable!("Unknown cart ram size!"),
+    };
+
     match cartridge_type {
         0x00 => Box::new(ROM::new(cart_data)),
-        0x01 => Box::new(MBC1::new(cart_data, false)),
+        0x01 => Box::new(MBC1::new(cart_data, false, ram_size)),
+        0x02 | 0x03 => Box::new(MBC1::new(cart_data, true, ram_size)),
         _ => panic!("Unknown cartridge type: 0x{:X}", cartridge_type),
     }
 }
