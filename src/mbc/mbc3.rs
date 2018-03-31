@@ -154,6 +154,5 @@ impl MBC for MBC3 {
             },
             _ => unreachable!("Tried to write non-existent mbc address"),
         }
-        self.cart_data[addr as usize] = value;
     }
 }
