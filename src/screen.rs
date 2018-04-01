@@ -47,6 +47,13 @@ impl Screen {
     pub fn start_loop(&mut self) {
         self.main_screen_loop();
         let _ = self.screen_exit_sender.send(());
+        loop {
+            match self.screen_data_receiver.try_recv() {
+                Ok(_) => (),
+                Err(mpsc::TryRecvError::Empty) => (),
+                Err(mpsc::TryRecvError::Disconnected) => break,
+            }
+        }
     }
 
     fn main_screen_loop(&mut self) {
