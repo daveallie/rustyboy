@@ -5,7 +5,7 @@ pub struct ROM {
 }
 
 impl ROM {
-    pub fn new(cart_data: Vec<u8>) -> Self {
+    pub fn new(_cart_path: &str, cart_data: Vec<u8>) -> Self {
         Self { cart_data }
     }
 }

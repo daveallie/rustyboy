@@ -1,9 +1,13 @@
-use mbc::MBC;
+use mbc::{self, MBC};
 use std::time::{UNIX_EPOCH, SystemTime, Duration};
+use std::fs::File;
+use std::path::Path;
+use std::io::{Read, Write};
 
 // http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers#MBC1_.28max_2MByte_ROM_and.2For_32KByte_RAM.29
 
 pub struct MBC3 {
+    save_path: String,
     cart_data: Vec<u8>,
     ram: Vec<u8>,
     ram_available: bool,
@@ -13,27 +17,45 @@ pub struct MBC3 {
     rtc_register: [u8; 5],
     primed_to_latch_rtc: bool,
     rtc_seconds_since_epoch: u64,
+    battery: bool,
 }
 
 impl MBC3 {
-    pub fn new(cart_data: Vec<u8>, ram_available: bool, ram_size: usize) -> Self {
+    pub fn new(cart_path: &str, cart_data: Vec<u8>, ram_available: bool, ram_size: usize, battery: bool) -> Self {
         let ram = if ram_available {
             vec![0; ram_size]
         } else {
             vec![]
         };
 
-        Self {
+        let mut res = Self {
+            save_path: mbc::build_save_path(cart_path),
             cart_data,
             ram,
             ram_available,
             ram_and_timer_enabled: false,
             rom_bank: 1,
             ram_bank: 0,
-            rtc_register: [0; 5],
+            rtc_register: [0_u8; 5],
             primed_to_latch_rtc: false,
             rtc_seconds_since_epoch: 0,
-        }
+            battery,
+        };
+
+        res.load_ram();
+        res
+    }
+
+    pub fn without_ram(cart_path: &str, cart_data: Vec<u8>) -> Self {
+        Self::new(cart_path, cart_data, false, 0, false)
+    }
+
+    pub fn with_ram(cart_path: &str, cart_data: Vec<u8>, ram_size: usize) -> Self {
+        Self::new(cart_path, cart_data, true, ram_size, false)
+    }
+
+    pub fn with_ram_and_battery(cart_path: &str, cart_data: Vec<u8>, ram_size: usize) -> Self {
+        Self::new(cart_path, cart_data, true, ram_size, true)
     }
 
     fn adjusted_rom_addr(&self, addr: u16) -> usize {
@@ -85,6 +107,40 @@ impl MBC3 {
         self.rtc_seconds_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH)
             .map(|duration| duration.as_secs() - seconds_to_now)
             .unwrap_or(0);
+    }
+
+    fn load_ram(&mut self) {
+        let path = Path::new(&self.save_path);
+        if !self.battery || !path.exists() {
+            return;
+        }
+
+        let mut file = match File::open(path) {
+            Ok(f) => f,
+            Err(_) => panic!("Failed to load save data!"),
+        };
+
+        file.read_exact(&mut self.rtc_register).unwrap();
+        if self.ram_available {
+            let mut new_ram: Vec<u8> = Vec::with_capacity(self.ram.len());
+            file.read_to_end(&mut new_ram).unwrap();
+            new_ram.resize(self.ram.len(), 0);
+            self.ram = new_ram;
+        }
+    }
+}
+
+impl Drop for MBC3 {
+    fn drop(&mut self) {
+        if !self.battery {
+            return
+        }
+
+        // Don't bother handling errors here
+        if let Ok(mut file) = File::create(&self.save_path) {
+            let _ = file.write_all(&self.rtc_register);
+            let _ = file.write_all(&self.ram.as_slice());
+        }
     }
 }
 

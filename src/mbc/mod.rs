@@ -9,6 +9,7 @@ use mbc::rom::ROM;
 use mbc::mbc1::MBC1;
 use mbc::mbc2::MBC2;
 use mbc::mbc3::MBC3;
+use std::path::Path;
 
 // http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header#0147_-_Cartridge_Type
 /*
@@ -46,26 +47,28 @@ pub fn new(cart_path: &str) -> Box<MBC> {
     };
 
     match cartridge_type {
-        0x00 => Box::new(ROM::new(cart_data)),
-        0x01 => Box::new(MBC1::new(cart_data, false, ram_size)),
-        0x02 | 0x03 => Box::new(MBC1::new(cart_data, true, ram_size)),
-        0x05 | 0x06 => Box::new(MBC2::new(cart_data)),
-        0x11 => Box::new(MBC3::new(cart_data, false, ram_size)),
-        0x12 | 0x13 => Box::new(MBC3::new(cart_data, true, ram_size)),
+        0x00 => Box::new(ROM::new(cart_path, cart_data)),
+        0x01 => Box::new(MBC1::without_ram(cart_path, cart_data)),
+        0x02 => Box::new(MBC1::with_ram(cart_path, cart_data, ram_size)),
+        0x03 => Box::new(MBC1::with_ram_and_battery(cart_path, cart_data, ram_size)),
+        0x05 => Box::new(MBC2::without_battery(cart_path, cart_data)),
+        0x06 => Box::new(MBC2::with_battery(cart_path, cart_data)),
+        0x11 => Box::new(MBC3::without_ram(cart_path, cart_data)),
+        0x12 => Box::new(MBC3::with_ram(cart_path, cart_data, ram_size)),
+        0x13 => Box::new(MBC3::with_ram_and_battery(cart_path, cart_data, ram_size)),
         _ => panic!("Unknown cartridge type: 0x{:X}", cartridge_type),
     }
 }
 
-fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
-    let mut file = match File::open(cart_path) {
-        Ok(f) => f,
-        Err(e) => panic!("Failed to open file from {}: {}", cart_path, e),
-    };
+pub fn build_save_path(cart_path: &str) -> String {
+    String::from(Path::new(cart_path).with_extension("gbsave-rustyboy").to_string_lossy())
+}
 
-    match file.read_to_end(buffer) {
+fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
+    match File::open(cart_path).and_then(|mut file| file.read_to_end(buffer)) {
         Ok(_) => println!("ROM loaded from {}", &cart_path),
         Err(e) => panic!("Failed to read file from {}: {}", cart_path, e),
-    }
+    };
 }
 
 pub trait MBC : Send {

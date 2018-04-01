@@ -1,8 +1,12 @@
-use mbc::MBC;
+use mbc::{self, MBC};
+use std::fs::File;
+use std::path::Path;
+use std::io::{Read, Write};
 
 // http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers#MBC1_.28max_2MByte_ROM_and.2For_32KByte_RAM.29
 
 pub struct MBC1 {
+    save_path: String,
     cart_data: Vec<u8>,
     ram: Vec<u8>,
     ram_available: bool,
@@ -10,17 +14,19 @@ pub struct MBC1 {
     rom_bank: u8,
     ram_bank: u8,
     rom_banking_mode: bool,
+    battery: bool,
 }
 
 impl MBC1 {
-    pub fn new(cart_data: Vec<u8>, ram_available: bool, ram_size: usize) -> Self {
+    pub fn new(cart_path: &str, cart_data: Vec<u8>, ram_available: bool, ram_size: usize, battery: bool) -> Self {
         let ram = if ram_available {
             vec![0; ram_size]
         } else {
             vec![]
         };
 
-        Self {
+        let mut res = Self {
+            save_path: mbc::build_save_path(cart_path),
             cart_data,
             ram,
             ram_available,
@@ -28,7 +34,23 @@ impl MBC1 {
             rom_bank: 1,
             ram_bank: 0,
             rom_banking_mode: true,
-        }
+            battery,
+        };
+
+        res.load_ram();
+        res
+    }
+
+    pub fn without_ram(cart_path: &str, cart_data: Vec<u8>) -> Self {
+        Self::new(cart_path, cart_data, false, 0, false)
+    }
+
+    pub fn with_ram(cart_path: &str, cart_data: Vec<u8>, ram_size: usize) -> Self {
+        Self::new(cart_path, cart_data, true, ram_size, false)
+    }
+
+    pub fn with_ram_and_battery(cart_path: &str, cart_data: Vec<u8>, ram_size: usize) -> Self {
+        Self::new(cart_path, cart_data, true, ram_size, true)
     }
 
     fn adjusted_rom_addr(&self, addr: u16) -> usize {
@@ -41,6 +63,34 @@ impl MBC1 {
 
     fn adjusted_ram_addr(&self, addr: u16) -> usize {
         (addr as usize & 0x1FFF) + (self.ram_bank as usize * 0x1FFF)
+    }
+
+    fn load_ram(&mut self) {
+        let path = Path::new(&self.save_path);
+        if !self.battery || !self.ram_available || !path.exists() {
+            return;
+        }
+
+        let mut file = match File::open(path) {
+            Ok(f) => f,
+            Err(_) => panic!("Failed to load save data!"),
+        };
+
+        let mut new_ram: Vec<u8> = Vec::with_capacity(self.ram.len());
+        file.read_to_end(&mut new_ram).unwrap();
+        new_ram.resize(self.ram.len(), 0);
+        self.ram = new_ram;
+    }
+}
+
+impl Drop for MBC1 {
+    fn drop(&mut self) {
+        if !self.battery || !self.ram_available {
+            return
+        }
+
+        // Don't bother handling errors here
+        let _ = File::create(&self.save_path).and_then(|mut file| file.write_all(&self.ram.as_slice()));
     }
 }
 
