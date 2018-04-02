@@ -8,5 +8,6 @@ default = []
 debugger = []
 
 [dependencies]
-glium = "*"
+# Waiting for update to glium - https://github.com/glium/glium/issues/1673
+glium = "0.19"
 clippy = { version = "*", optional = true }

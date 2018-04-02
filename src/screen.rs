@@ -119,15 +119,15 @@ impl Screen {
 
         self.texture.write(glium::Rect { left: 0, bottom: 0, width: Self::WIDTH, height: Self::HEIGHT }, raw_image_2d);
 
-        let mut target = self.display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        let target = self.display.draw();
         let (unsigned_width, unsigned_height) = target.get_dimensions();
-        // I have no idea why I need to double the width and height, only renders to quarter of window otherwise
-        // Could be to do with my machine?
+        // I need to double the width and height as I'm developing on a retina display
+        // only renders to quarter of window otherwise
+
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-        let width = 2 * i32::from(unsigned_width as u16);
+        let width = i32::from(unsigned_width as u16);
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-        let height = 2 * i32::from(unsigned_height as u16);
+        let height = i32::from(unsigned_height as u16);
         #[cfg_attr(feature="clippy", allow(cast_sign_loss))]
         let blit_target = glium::BlitTarget { left: 0, bottom: height as u32, width, height: -height };
         self.texture.as_surface().blit_whole_color_to(&target, &blit_target, glium::uniforms::MagnifySamplerFilter::Nearest);
