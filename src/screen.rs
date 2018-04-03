@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use glium::{self, glutin, texture, Surface};
 use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use input::{Key, KeyType};
 
 pub struct Screen {
@@ -12,13 +12,17 @@ pub struct Screen {
     screen_data_receiver: mpsc::Receiver<Vec<u8>>,
     key_data_sender: mpsc::Sender<Key>,
     screen_exit_sender: mpsc::Sender<()>,
+    last_screen_render: Instant,
+    min_render_space: Duration,
+    throttled_state_sender: mpsc::Sender<bool>,
+    throttled: bool,
 }
 
 impl Screen {
     pub const WIDTH: u32 = 160;
     pub const HEIGHT: u32 = 144;
 
-    pub fn new(title: &str, scale: u32, screen_data_receiver: mpsc::Receiver<Vec<u8>>, key_data_sender: mpsc::Sender<Key>, screen_exit_sender: mpsc::Sender<()>) -> Self {
+    pub fn new(title: &str, scale: u32, screen_data_receiver: mpsc::Receiver<Vec<u8>>, key_data_sender: mpsc::Sender<Key>, throttled_state_sender: mpsc::Sender<bool>, screen_exit_sender: mpsc::Sender<()>) -> Self {
         let events_loop = glutin::EventsLoop::new();
         let window = glutin::WindowBuilder::new()
             .with_title(title)
@@ -41,6 +45,10 @@ impl Screen {
             screen_data_receiver,
             key_data_sender,
             screen_exit_sender,
+            last_screen_render: Instant::now(),
+            min_render_space: Duration::new(0, 8_333_333), // 120 fps
+            throttled: true,
+            throttled_state_sender,
         }
     }
 
@@ -68,13 +76,14 @@ impl Screen {
                 Err(mpsc::TryRecvError::Disconnected) => closed = true,
             }
 
-            // Sleep for 1/60th of a second
-            thread::sleep(Duration::new(0, 16_666_666));
+            // Sleep for 1/120th of a second (or 1/15th of that if unthrottled)
+            thread::sleep(Duration::new(0, if self.throttled { 8_333_333 } else { 555_555 }));
         }
     }
 
     fn poll_for_window_events(&mut self) -> bool {
         let mut closed = false;
+        let mut throttled = self.throttled;
         let key_sender = self.key_data_sender.clone();
 
         self.events_loop.poll_events(|ev| {
@@ -93,6 +102,7 @@ impl Screen {
                             Some(glutin::VirtualKeyCode::X) => { let _ = key_sender.send(Key { key_type: KeyType::B, is_down }); }
                             Some(glutin::VirtualKeyCode::C) => { let _ = key_sender.send(Key { key_type: KeyType::Select, is_down }); }
                             Some(glutin::VirtualKeyCode::V) => { let _ = key_sender.send(Key { key_type: KeyType::Start, is_down }); }
+                            Some(glutin::VirtualKeyCode::Space) => { throttled = !is_down; }
                             Some(glutin::VirtualKeyCode::Q) => {
                                 if input.modifiers.ctrl || input.modifiers.logo {
                                     closed = true;
@@ -106,10 +116,24 @@ impl Screen {
             }
         });
 
+        if throttled != self.throttled {
+            self.throttled = throttled;
+            let _ = self.throttled_state_sender.send(self.throttled);
+        }
+
         closed
     }
 
     fn draw_data(&mut self, data: &[u8]) {
+        if !self.throttled {
+            let now = Instant::now();
+            if now.duration_since(self.last_screen_render).lt(&self.min_render_space) {
+                return
+            }
+
+            self.last_screen_render = now;
+        }
+
         let raw_image_2d = glium::texture::RawImage2d {
             data: Cow::Borrowed(data),
             width: Self::WIDTH,

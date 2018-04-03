@@ -37,9 +37,10 @@ fn main() {
     let (screen_data_sender, screen_data_receiver) = mpsc::sync_channel(1);
     let (key_data_sender, key_data_receiver) = mpsc::channel();
     let (screen_exit_sender, screen_exit_receiver) = mpsc::channel();
+    let (throttled_state_sender, throttled_state_receiver) = mpsc::channel();
 
-    let cpu = CPU::new(&cart_path, screen_data_sender, key_data_receiver, screen_exit_receiver);
-    let screen = Screen::new("Rustyboy", 4, screen_data_receiver, key_data_sender, screen_exit_sender);
+    let cpu = CPU::new(&cart_path, screen_data_sender, key_data_receiver, throttled_state_receiver, screen_exit_receiver);
+    let screen = Screen::new("Rustyboy", 4, screen_data_receiver, key_data_sender, throttled_state_sender, screen_exit_sender);
 
     run(cpu, screen);
 }

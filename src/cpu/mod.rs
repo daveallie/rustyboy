@@ -15,6 +15,8 @@ pub struct CPU {
     interrupts_enabled: bool,
     halting: bool,
     screen_exit_receiver: mpsc::Receiver<()>,
+    throttled_state_receiver: mpsc::Receiver<bool>,
+    throttled: bool,
 }
 
 impl CPU {
@@ -22,7 +24,7 @@ impl CPU {
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576
     const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
 
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>, screen_exit_receiver: mpsc::Receiver<()>) -> Self {
+    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>, throttled_state_receiver: mpsc::Receiver<bool>, screen_exit_receiver: mpsc::Receiver<()>) -> Self {
         Self {
             reg: register::Registers::new(),
             mmu: mmu::MMU::new(cart_path, screen_data_sender, key_data_receiver),
@@ -31,6 +33,8 @@ impl CPU {
             interrupts_enabled: true,
             halting: false,
             screen_exit_receiver,
+            throttled_state_receiver,
+            throttled: true,
         }
     }
 
@@ -45,13 +49,18 @@ impl CPU {
         loop {
             if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
                 if self.screen_exit_receiver.try_recv().is_ok() { break }
-
-                let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
-                if time_since_last_set_start < time_for_n_cycles {
-                    thread::sleep(time_for_n_cycles - time_since_last_set_start);
+                match self.throttled_state_receiver.try_recv() {
+                    Ok(v) => self.throttled = v,
+                    _ => (),
                 }
 
-                start_of_last_n_cycles = Instant::now();
+                if self.throttled {
+                    let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
+                    if time_since_last_set_start < time_for_n_cycles {
+                        thread::sleep(time_for_n_cycles - time_since_last_set_start);
+                    }
+                    start_of_last_n_cycles = Instant::now();
+                }
                 cycles_since_sleep = 0;
             }
 
