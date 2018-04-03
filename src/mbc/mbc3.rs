@@ -192,8 +192,9 @@ impl MBC for MBC3 {
                 };
             }
             0x4000...0x5FFF => {
-                match value {
-                    0x00...0x03 | 0x08...0x0C => self.ram_bank = value,
+                let trunc_value = value & 0x0F;
+                match trunc_value {
+                    0x00...0x03 | 0x08...0x0C => self.ram_bank = trunc_value,
                     _ => panic!("Writing unknown ram bank number!"),
                 }
             }
