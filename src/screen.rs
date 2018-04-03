@@ -1,6 +1,12 @@
 use glium::{self, glutin, texture, Surface};
+#[cfg(feature = "frame-capture")]
+use image;
 use input::{Key, KeyType};
 use std::borrow::Cow;
+#[cfg(feature = "frame-capture")]
+use std::fs::File;
+#[cfg(feature = "frame-capture")]
+use std::path::Path;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -16,6 +22,8 @@ pub struct Screen {
     min_render_space: Duration,
     throttled_state_sender: mpsc::Sender<bool>,
     throttled: bool,
+    #[cfg(feature = "frame-capture")]
+    frame_id: u64,
 }
 
 impl Screen {
@@ -62,6 +70,8 @@ impl Screen {
             min_render_space: Duration::new(0, 8_333_333), // 120 fps
             throttled: true,
             throttled_state_sender,
+            #[cfg(feature = "frame-capture")]
+            frame_id: 0,
         }
     }
 
@@ -203,6 +213,10 @@ impl Screen {
             format: glium::texture::ClientFormat::U8U8U8,
         };
 
+        #[cfg(feature = "frame-capture")]
+        self.save_frame(data);
+
+
         self.texture.write(
             glium::Rect {
                 left: 0,
@@ -238,4 +252,14 @@ impl Screen {
             println!("ERROR: Failed to write to display: {}", e)
         }
     }
+
+    #[cfg(feature = "frame-capture")]
+    fn save_frame(&mut self, data : &[u8]) {
+        let image = image::ImageBuffer::from_raw(Self::WIDTH, Self::HEIGHT, data.to_vec()).unwrap();
+        let image = image::DynamicImage::ImageRgb8(image);
+        let mut output = File::create(&Path::new(&format!("frames/frame-{:010}.png", self.frame_id))).unwrap();
+        self.frame_id += 1;
+        image.save(&mut output, image::ImageFormat::PNG).unwrap();
+    }
+
 }

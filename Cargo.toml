@@ -6,8 +6,10 @@ authors = ["Dave Allie <dave@daveallie.com>"]
 [features]
 default = []
 debugger = []
+frame-capture = ["image"]
 
 [dependencies]
 # Waiting for update to glium - https://github.com/glium/glium/issues/1673
 glium = "0.19"
+image = { version = "*", optional = true }
 clippy = { version = "*", optional = true }

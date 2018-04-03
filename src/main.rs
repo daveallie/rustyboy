@@ -9,6 +9,8 @@
 #![cfg_attr(feature="clippy", allow(print_stdout))]
 
 extern crate glium;
+#[cfg(feature = "frame-capture")]
+extern crate image;
 
 mod clock;
 mod cpu;
