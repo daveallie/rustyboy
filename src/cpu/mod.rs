@@ -1,11 +1,11 @@
 mod ops;
 
+use input::Key;
+use mmu;
+use register;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-use register;
-use mmu;
-use input::Key;
 
 pub struct CPU {
     pub reg: register::Registers,
@@ -24,7 +24,13 @@ impl CPU {
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576
     const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
 
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>, throttled_state_receiver: mpsc::Receiver<bool>, screen_exit_receiver: mpsc::Receiver<()>) -> Self {
+    pub fn new(
+        cart_path: &str,
+        screen_data_sender: mpsc::SyncSender<Vec<u8>>,
+        key_data_receiver: mpsc::Receiver<Key>,
+        throttled_state_receiver: mpsc::Receiver<bool>,
+        screen_exit_receiver: mpsc::Receiver<()>,
+    ) -> Self {
         Self {
             reg: register::Registers::new(),
             mmu: mmu::MMU::new(cart_path, screen_data_sender, key_data_receiver),
@@ -40,7 +46,11 @@ impl CPU {
 
     pub fn main_loop(&mut self) {
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation, cast_sign_loss))]
-        let time_for_n_cycles = Duration::new(0, (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32);
+        let time_for_n_cycles = Duration::new(
+            0,
+            (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) /
+                 f64::from(Self::CYCLE_SPEED)) as u32,
+        );
 
         let mut cycles_since_sleep: u32 = 0;
         let mut start_of_last_n_cycles = Instant::now();
@@ -48,8 +58,12 @@ impl CPU {
         let mut time_of_next_log: Instant = Instant::now() + Duration::new(1, 0);
         loop {
             if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
-                if self.screen_exit_receiver.try_recv().is_ok() { break }
-                if let Ok(v) = self.throttled_state_receiver.try_recv() { self.throttled = v }
+                if self.screen_exit_receiver.try_recv().is_ok() {
+                    break;
+                }
+                if let Ok(v) = self.throttled_state_receiver.try_recv() {
+                    self.throttled = v
+                }
 
                 if self.throttled {
                     let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;
@@ -62,7 +76,10 @@ impl CPU {
             }
 
             if time_of_next_log <= Instant::now() {
-                println!("RUNNING AT {}%", 100_f64 * f64::from(cycles_since_last_log) / f64::from(Self::CYCLE_SPEED));
+                println!(
+                    "RUNNING AT {}%",
+                    100_f64 * f64::from(cycles_since_last_log) / f64::from(Self::CYCLE_SPEED)
+                );
                 time_of_next_log = Instant::now() + Duration::new(1, 0);
                 cycles_since_last_log = 0;
             }
@@ -115,17 +132,17 @@ impl CPU {
 
     fn jump_on_interrupt(&mut self) -> u8 {
         if !self.interrupts_enabled && !self.halting {
-            return 0
+            return 0;
         }
 
         let interrupt_flags = self.mmu.get_triggered_interrupts();
         if interrupt_flags == 0 {
-            return 0
+            return 0;
         }
 
         self.halting = false;
         if !self.interrupts_enabled {
-            return 0
+            return 0;
         }
         self.interrupts_enabled = false;
 
@@ -142,7 +159,10 @@ impl CPU {
             }
         }
 
-        panic!("Unknown interrupt was not handled! 0b{:08b}", interrupt_flags);
+        panic!(
+            "Unknown interrupt was not handled! 0b{:08b}",
+            interrupt_flags
+        );
     }
 
     fn get_byte(&mut self) -> u8 {

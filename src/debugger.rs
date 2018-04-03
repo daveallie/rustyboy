@@ -1,7 +1,7 @@
-use std::process;
-use std::io::{self, Write};
 use cpu;
 use register::Flags;
+use std::io::{self, Write};
+use std::process;
 
 pub struct Debugger {
     current_steps: u32,
@@ -36,7 +36,11 @@ impl Debugger {
             if self.output {
                 print!("{} ", self.current_steps);
                 let addr = self.cpu.reg.pc;
-                println!("instr: 0x{:X} -- opcode: 0x{:X}", addr, self.cpu.mmu.read_byte(addr));
+                println!(
+                    "instr: 0x{:X} -- opcode: 0x{:X}",
+                    addr,
+                    self.cpu.mmu.read_byte(addr)
+                );
             }
             self.cpu.run_cycle();
             self.current_steps += 1;
@@ -76,7 +80,7 @@ impl Debugger {
 
             if reg_value == break_point.value {
                 output(&format!("Breaking as {} is {}\n", key, reg_value));
-                return Some(i)
+                return Some(i);
             }
         }
 
@@ -97,24 +101,22 @@ impl Debugger {
             Some("c") | Some("continue") => {
                 self.debug_after_cycles_enabled = false;
                 self.debugging = false;
-            },
+            }
             Some("n") | Some("next") => {
                 let jump = read_num(words.next().unwrap_or("0"));
                 self.debug_after_cycles = self.current_steps + jump;
                 self.debug_after_cycles_enabled = true;
                 self.debugging = false;
-            },
+            }
             Some("bo") | Some("breakon") => {
                 let key = words.next().unwrap().to_owned();
                 let value = read_num(words.next().unwrap_or("0"));
-                self.reg_break_points.push(RegBreakPoint {
-                    key,
-                    value,
-                });
+                self.reg_break_points.push(RegBreakPoint { key, value });
                 self.debug_after_cycles_enabled = false;
                 self.debugging = false;
-            },
-            Some("reg") | Some("registers") => {
+            }
+            Some("reg") |
+            Some("registers") => {
                 let action = words.next();
 
                 if action.is_some() && action.unwrap() == "write" {
@@ -154,24 +156,27 @@ impl Debugger {
                     output(&format!("H: {}\n", register.get_flag(Flags::H)));
                     output(&format!("C: {}\n", register.get_flag(Flags::C)));
                 }
-            },
+            }
             Some("lastbyte") => {
-                output(&format!("0x{:X}\n", self.cpu.mmu.read_byte(self.cpu.reg.pc - 1)));
-            },
+                output(&format!(
+                    "0x{:X}\n",
+                    self.cpu.mmu.read_byte(self.cpu.reg.pc - 1)
+                ));
+            }
             Some("rb") => {
                 let addr = read_num(words.next().unwrap_or("0")) as u16;
                 output(&format!("0x{:X}\n", self.cpu.mmu.read_byte(addr)));
-            },
+            }
             Some("rw") => {
                 let addr = read_num(words.next().unwrap_or("0")) as u16;
                 output(&format!("0x{:X}\n", self.cpu.mmu.read_word(addr)));
-            },
+            }
             Some("out") => {
                 self.output = words.next().unwrap_or("on") == "on";
             }
             Some("dump") => self.dump(words.next().unwrap_or("mem_dump")),
             Some("exit") => process::exit(1),
-            _ => output("Unknown command!\n")
+            _ => output("Unknown command!\n"),
         };
     }
 

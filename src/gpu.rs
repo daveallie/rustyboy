@@ -1,5 +1,5 @@
-use std::sync::mpsc;
 use screen::Screen;
+use std::sync::mpsc;
 
 const VIDEO_RAM_SIZE: usize = 0x2000;
 
@@ -56,7 +56,7 @@ impl GPU {
 
     pub fn run_cycle(&mut self, cycles: u8) {
         if !self.is_lcd_on() {
-            return
+            return;
         }
 
         self.process_cycles(cycles);
@@ -108,15 +108,15 @@ impl GPU {
             0xFF47 => {
                 self.bg_palette = value;
                 self.bg_palette_map = build_palette_map(value);
-            },
+            }
             0xFF48 => {
                 self.obj_palette_0 = value;
                 self.obj_palette_0_map = build_palette_map(value);
-            },
+            }
             0xFF49 => {
                 self.obj_palette_1 = value;
                 self.obj_palette_1_map = build_palette_map(value);
-            },
+            }
             0xFF4A => self.win_y = value,
             0xFF4B => self.win_x = value,
             _ => panic!("Unknown GPU control write operation: 0x{:X}", addr),
@@ -126,7 +126,7 @@ impl GPU {
     fn process_cycles(&mut self, cycles: u8) {
         let cycles_u32 = u32::from(cycles);
         if self.render_clock + cycles_u32 >= 114 {
-            self.render_clock =  (self.render_clock + cycles_u32) % 114;
+            self.render_clock = (self.render_clock + cycles_u32) % 114;
             self.increment_line();
             self.render_background();
             self.render_sprites();
@@ -161,15 +161,17 @@ impl GPU {
             self.interrupt |= 0x02;
         }
 
-        if self.ly == 144 { // V-Blank
+        if self.ly == 144 {
+            // V-Blank
             self.interrupt |= 0x01; // Mark V-Blank interrupt
             self.render_screen();
         }
     }
 
     fn render_background(&mut self) {
-        if !self.is_window_bg_on() || self.ly >= 144 { // bg and window display
-            return
+        if !self.is_window_bg_on() || self.ly >= 144 {
+            // bg and window display
+            return;
         }
 
         let winy = self.ly.wrapping_sub(self.win_y);
@@ -180,7 +182,7 @@ impl GPU {
         let bgy_tile = (u16::from(bgy) & 0xFF) >> 3;
         let bgy_pixel_in_tile = u16::from(bgy) & 0x07;
 
-        for x in 0 .. Screen::WIDTH {
+        for x in 0..Screen::WIDTH {
             let (tile_number, x_pixel_in_tile, y_pixel_in_tile): (u8, u8, u16) = if self.rendering_window(x) {
                 let winx = x + 7 - u32::from(self.win_x);
                 #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
@@ -204,7 +206,10 @@ impl GPU {
             let tile_addr = self.get_tile_addr(tile_number);
 
             let tile_line_addr = tile_addr + y_pixel_in_tile * 2;
-            let (tile_line_data_1, tile_line_data_2) = (self.read_video_ram(tile_line_addr), self.read_video_ram(tile_line_addr + 1));
+            let (tile_line_data_1, tile_line_data_2) = (
+                self.read_video_ram(tile_line_addr),
+                self.read_video_ram(tile_line_addr + 1),
+            );
             let pixel_in_line_mask = 1 << x_pixel_in_tile;
             let pixel_data_1: u8 = if tile_line_data_1 & pixel_in_line_mask > 0 {
                 0b01
@@ -249,11 +254,7 @@ impl GPU {
             return;
         }
 
-        let sprite_height = if self.is_sprite_8_by_16() {
-            16
-        } else {
-            8
-        };
+        let sprite_height = if self.is_sprite_8_by_16() { 16 } else { 8 };
 
         for sprite_id in 0..40_u16 {
             let sprite_attr_addr = sprite_id * 4;
@@ -278,7 +279,10 @@ impl GPU {
             });
 
             let sprite_addr = 0x8000_u16 + (u16::from(sprite_location) * 16) + y_pixel_in_tile * 2;
-            let (sprite_data_1, sprite_data_2) = (self.read_video_ram(sprite_addr), self.read_video_ram(sprite_addr + 1));
+            let (sprite_data_1, sprite_data_2) = (
+                self.read_video_ram(sprite_addr),
+                self.read_video_ram(sprite_addr + 1),
+            );
 
             for x_pixel_in_tile in 0..8_u8 {
                 let pixel_in_line_mask = if x_flip {
@@ -353,7 +357,9 @@ impl GPU {
     }
 
     fn render_screen(&self) {
-        match self.screen_data_sender.send(self.next_screen_buffer.to_vec()) {
+        match self.screen_data_sender.send(
+            self.next_screen_buffer.to_vec(),
+        ) {
             Ok(_) => (),
             Err(e) => println!("Failed to send screen data: {}", e),
         };

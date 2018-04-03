@@ -1,9 +1,9 @@
-use std::borrow::Cow;
 use glium::{self, glutin, texture, Surface};
+use input::{Key, KeyType};
+use std::borrow::Cow;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-use input::{Key, KeyType};
 
 pub struct Screen {
     display: glium::Display,
@@ -22,7 +22,14 @@ impl Screen {
     pub const WIDTH: u32 = 160;
     pub const HEIGHT: u32 = 144;
 
-    pub fn new(title: &str, scale: u32, screen_data_receiver: mpsc::Receiver<Vec<u8>>, key_data_sender: mpsc::Sender<Key>, throttled_state_sender: mpsc::Sender<bool>, screen_exit_sender: mpsc::Sender<()>) -> Self {
+    pub fn new(
+        title: &str,
+        scale: u32,
+        screen_data_receiver: mpsc::Receiver<Vec<u8>>,
+        key_data_sender: mpsc::Sender<Key>,
+        throttled_state_sender: mpsc::Sender<bool>,
+        screen_exit_sender: mpsc::Sender<()>,
+    ) -> Self {
         let events_loop = glutin::EventsLoop::new();
         let window = glutin::WindowBuilder::new()
             .with_title(title)
@@ -33,7 +40,13 @@ impl Screen {
             Ok(d) => d,
             Err(e) => panic!("Failed to create display: {}", e),
         };
-        let texture = match texture::texture2d::Texture2d::empty_with_format(&display, texture::UncompressedFloatFormat::U8U8U8, texture::MipmapsOption::NoMipmap, Self::WIDTH, Self::HEIGHT) {
+        let texture = match texture::texture2d::Texture2d::empty_with_format(
+            &display,
+            texture::UncompressedFloatFormat::U8U8U8,
+            texture::MipmapsOption::NoMipmap,
+            Self::WIDTH,
+            Self::HEIGHT,
+        ) {
             Ok(t) => t,
             Err(e) => panic!("Failed to create texture: {}", e),
         };
@@ -56,7 +69,9 @@ impl Screen {
         self.main_screen_loop();
         let _ = self.screen_exit_sender.send(());
         loop {
-            if let Err(mpsc::TryRecvError::Disconnected) = self.screen_data_receiver.try_recv() { break }
+            if let Err(mpsc::TryRecvError::Disconnected) = self.screen_data_receiver.try_recv() {
+                break;
+            }
         }
     }
 
@@ -73,7 +88,10 @@ impl Screen {
             }
 
             // Sleep for 1/120th of a second (or 1/15th of that if unthrottled)
-            thread::sleep(Duration::new(0, if self.throttled { 8_333_333 } else { 555_555 }));
+            thread::sleep(Duration::new(
+                0,
+                if self.throttled { 8_333_333 } else { 555_555 },
+            ));
         }
     }
 
@@ -82,23 +100,68 @@ impl Screen {
         let mut throttled = self.throttled;
         let key_sender = self.key_data_sender.clone();
 
-        self.events_loop.poll_events(|ev| {
-            if let glutin::Event::WindowEvent { event, .. } = ev {
+        self.events_loop.poll_events(
+            |ev| if let glutin::Event::WindowEvent {
+                event, ..
+            } = ev
+            {
                 match event {
                     glutin::WindowEvent::Closed => closed = true,
                     glutin::WindowEvent::KeyboardInput { input, .. } => {
                         let is_down = input.state == glutin::ElementState::Pressed;
 
                         match input.virtual_keycode {
-                            Some(glutin::VirtualKeyCode::Up) => { let _ = key_sender.send(Key { key_type: KeyType::Up, is_down }); }
-                            Some(glutin::VirtualKeyCode::Down) => { let _ = key_sender.send(Key { key_type: KeyType::Down, is_down }); }
-                            Some(glutin::VirtualKeyCode::Left) => { let _ = key_sender.send(Key { key_type: KeyType::Left, is_down }); }
-                            Some(glutin::VirtualKeyCode::Right) => { let _ = key_sender.send(Key { key_type: KeyType::Right, is_down }); }
-                            Some(glutin::VirtualKeyCode::Z) => { let _ = key_sender.send(Key { key_type: KeyType::A, is_down }); }
-                            Some(glutin::VirtualKeyCode::X) => { let _ = key_sender.send(Key { key_type: KeyType::B, is_down }); }
-                            Some(glutin::VirtualKeyCode::C) => { let _ = key_sender.send(Key { key_type: KeyType::Select, is_down }); }
-                            Some(glutin::VirtualKeyCode::V) => { let _ = key_sender.send(Key { key_type: KeyType::Start, is_down }); }
-                            Some(glutin::VirtualKeyCode::Space) => { throttled = !is_down; }
+                            Some(glutin::VirtualKeyCode::Up) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::Up,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::Down) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::Down,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::Left) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::Left,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::Right) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::Right,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::Z) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::A,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::X) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::B,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::C) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::Select,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::V) => {
+                                let _ = key_sender.send(Key {
+                                    key_type: KeyType::Start,
+                                    is_down,
+                                });
+                            }
+                            Some(glutin::VirtualKeyCode::Space) => {
+                                throttled = !is_down;
+                            }
                             Some(glutin::VirtualKeyCode::Q) => {
                                 if input.modifiers.ctrl || input.modifiers.logo {
                                     closed = true;
@@ -107,10 +170,10 @@ impl Screen {
                             _ => (),
                         }
                     }
-                    _ => ()
+                    _ => (),
                 }
-            }
-        });
+            },
+        );
 
         if throttled != self.throttled {
             self.throttled = throttled;
@@ -123,8 +186,11 @@ impl Screen {
     fn draw_data(&mut self, data: &[u8]) {
         if !self.throttled {
             let now = Instant::now();
-            if now.duration_since(self.last_screen_render).lt(&self.min_render_space) {
-                return
+            if now.duration_since(self.last_screen_render).lt(
+                &self.min_render_space,
+            )
+            {
+                return;
             }
 
             self.last_screen_render = now;
@@ -137,7 +203,15 @@ impl Screen {
             format: glium::texture::ClientFormat::U8U8U8,
         };
 
-        self.texture.write(glium::Rect { left: 0, bottom: 0, width: Self::WIDTH, height: Self::HEIGHT }, raw_image_2d);
+        self.texture.write(
+            glium::Rect {
+                left: 0,
+                bottom: 0,
+                width: Self::WIDTH,
+                height: Self::HEIGHT,
+            },
+            raw_image_2d,
+        );
 
         let target = self.display.draw();
         let (unsigned_width, unsigned_height) = target.get_dimensions();
@@ -149,8 +223,17 @@ impl Screen {
         #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
         let height = i32::from(unsigned_height as u16);
         #[cfg_attr(feature="clippy", allow(cast_sign_loss))]
-        let blit_target = glium::BlitTarget { left: 0, bottom: height as u32, width, height: -height };
-        self.texture.as_surface().blit_whole_color_to(&target, &blit_target, glium::uniforms::MagnifySamplerFilter::Nearest);
+        let blit_target = glium::BlitTarget {
+            left: 0,
+            bottom: height as u32,
+            width,
+            height: -height,
+        };
+        self.texture.as_surface().blit_whole_color_to(
+            &target,
+            &blit_target,
+            glium::uniforms::MagnifySamplerFilter::Nearest,
+        );
         if let Err(e) = target.finish() {
             println!("ERROR: Failed to write to display: {}", e)
         }

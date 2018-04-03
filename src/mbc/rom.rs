@@ -19,5 +19,5 @@ impl MBC for ROM {
         self.cart_data[addr as usize]
     }
 
-    fn write_byte(&mut self, _addr: u16, _value: u8) { }
+    fn write_byte(&mut self, _addr: u16, _value: u8) {}
 }

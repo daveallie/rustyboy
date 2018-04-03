@@ -21,7 +21,12 @@ impl Noise {
             0xFF21 => self.envelope,
             0xFF22 => self.polynomial_counter,
             0xFF23 => self.counter_consecutive & 0x40,
-            _ => unreachable!("Unreachable noise channel sound read operation: 0x{:X}", addr),
+            _ => {
+                unreachable!(
+                    "Unreachable noise channel sound read operation: 0x{:X}",
+                    addr
+                )
+            }
         }
     }
 
@@ -31,7 +36,12 @@ impl Noise {
             0xFF21 => self.envelope = value,
             0xFF22 => self.polynomial_counter = value,
             0xFF23 => self.counter_consecutive = value & 0xC0,
-            _ => unreachable!("Unreachable noise channel sound write operation: 0x{:X}", addr),
+            _ => {
+                unreachable!(
+                    "Unreachable noise channel sound write operation: 0x{:X}",
+                    addr
+                )
+            }
         }
     }
 }

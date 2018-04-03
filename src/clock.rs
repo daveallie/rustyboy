@@ -34,7 +34,7 @@ impl Clock {
         }
 
         if self.counter_stopped() {
-            return
+            return;
         }
 
         self.counter_increment_timer += u32::from(cpu_cycles);

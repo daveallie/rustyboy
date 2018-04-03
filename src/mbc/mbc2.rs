@@ -1,7 +1,7 @@
 use mbc::{self, MBC};
 use std::fs::File;
-use std::path::Path;
 use std::io::{Read, Write};
+use std::path::Path;
 
 // http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers#MBC2_.28max_256KByte_ROM_and_512x4_bits_RAM.29
 
@@ -59,7 +59,7 @@ impl MBC2 {
 impl Drop for MBC2 {
     fn drop(&mut self) {
         if !self.battery {
-            return
+            return;
         }
 
         // Don't bother handling errors here
@@ -76,7 +76,7 @@ impl MBC for MBC2 {
                     panic!("Attempting to read external ram, which isn't enabled!");
                 }
                 self.ram[(addr & 0x1FF) as usize]
-            },
+            }
             _ => unreachable!("Tried to read non-existent mbc address"),
         }
     }
@@ -87,7 +87,7 @@ impl MBC for MBC2 {
                 if addr & 0x0100 > 1 {
                     self.ram_enabled = value & 0x0F == 0x0A;
                 }
-            },
+            }
             0x2000...0x3FFF => {
                 if addr & 0x0100 > 1 {
                     let rom_bank = value & 0x0F;
@@ -97,13 +97,13 @@ impl MBC for MBC2 {
                         rom_bank
                     };
                 }
-            },
+            }
             0xA000...0xA1FF => {
                 if !self.ram_enabled {
                     panic!("Attempting to write external ram, which isn't enabled!");
                 }
                 self.ram[(addr & 0x1FF) as usize] = value & 0x0F;
-            },
+            }
             _ => unreachable!("Tried to write non-existent mbc address"),
         }
     }

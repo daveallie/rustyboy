@@ -17,17 +17,16 @@ impl Registers {
     // Add n + Carry flag to A
     pub fn alu_adc(&mut self, input: u8) {
         let a = self.a;
-        let carry_bit = if self.get_flag(Flags::C) {
-            0x01
-        } else {
-            0x00
-        };
+        let carry_bit = if self.get_flag(Flags::C) { 0x01 } else { 0x00 };
 
         let result = a.wrapping_add(input).wrapping_add(carry_bit);
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::H, (a & 0x0F) + (input & 0x0F) + carry_bit > 0x0F);
         self.set_flag(Flags::N, false);
-        self.set_flag(Flags::C, u16::from(0xFF - a) < (u16::from(input) + u16::from(carry_bit)));
+        self.set_flag(
+            Flags::C,
+            u16::from(0xFF - a) < (u16::from(input) + u16::from(carry_bit)),
+        );
         self.a = result;
     }
 
@@ -45,17 +44,16 @@ impl Registers {
     // Subtract n + Carry flag from A
     pub fn alu_sbc(&mut self, input: u8) {
         let a = self.a;
-        let carry_bit = if self.get_flag(Flags::C) {
-            0x01
-        } else {
-            0x00
-        };
+        let carry_bit = if self.get_flag(Flags::C) { 0x01 } else { 0x00 };
 
         let result = a.wrapping_sub(input).wrapping_sub(carry_bit);
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::H, (a & 0x0F) < ((input & 0x0F) + carry_bit));
         self.set_flag(Flags::N, true);
-        self.set_flag(Flags::C, u16::from(a) < (u16::from(input) + u16::from(carry_bit)));
+        self.set_flag(
+            Flags::C,
+            u16::from(a) < (u16::from(input) + u16::from(carry_bit)),
+        );
         self.a = result;
     }
 

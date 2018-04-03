@@ -1,8 +1,8 @@
 use mbc::{self, MBC};
-use std::time::{UNIX_EPOCH, SystemTime, Duration};
 use std::fs::File;
-use std::path::Path;
 use std::io::{Read, Write};
+use std::path::Path;
+use std::time::{UNIX_EPOCH, SystemTime, Duration};
 
 // http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers#MBC1_.28max_2MByte_ROM_and.2For_32KByte_RAM.29
 
@@ -72,13 +72,14 @@ impl MBC3 {
 
     fn latch_rtc(&mut self) {
         let rtc_time = UNIX_EPOCH + Duration::from_secs(self.rtc_seconds_since_epoch);
-        let seconds_to_now = SystemTime::now().duration_since(rtc_time)
+        let seconds_to_now = SystemTime::now()
+            .duration_since(rtc_time)
             .map(|duration| duration.as_secs())
             .unwrap_or(0);
 
         if self.rtc_register[4] & 0x40 > 0 {
             // disabled
-            return
+            return;
         }
 
         let days = seconds_to_now / 3600 / 24;
@@ -107,13 +108,17 @@ impl MBC3 {
     }
 
     fn reset_rtc(&mut self) {
-        let seconds_to_now = u64::from(self.rtc_register[0])
-            + u64::from(self.rtc_register[1]) * 60
-            + u64::from(self.rtc_register[2]) * 3600
-            + u64::from(self.rtc_register[3]) * 3600 * 24
-            + if self.rtc_register[4] & 0x01 > 0 { 0x0100 * 3600 * 24 } else { 0 };
+        let seconds_to_now = u64::from(self.rtc_register[0]) + u64::from(self.rtc_register[1]) * 60 +
+            u64::from(self.rtc_register[2]) * 3600 +
+            u64::from(self.rtc_register[3]) * 3600 * 24 +
+            if self.rtc_register[4] & 0x01 > 0 {
+                0x0100 * 3600 * 24
+            } else {
+                0
+            };
 
-        self.rtc_seconds_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH)
+        self.rtc_seconds_since_epoch = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
             .map(|duration| duration.as_secs() - seconds_to_now)
             .unwrap_or(0);
     }
@@ -125,7 +130,9 @@ impl MBC3 {
         }
 
         let mut file = File::open(path).expect("Failed to load save data!");
-        file.read_exact(&mut self.rtc_register).expect("Failed to read rtc data!");
+        file.read_exact(&mut self.rtc_register).expect(
+            "Failed to read rtc data!",
+        );
         if self.ram_available {
             let mut new_ram: Vec<u8> = Vec::with_capacity(self.ram.len());
             file.read_to_end(&mut new_ram).expect("Failed to read ram!");
@@ -138,7 +145,7 @@ impl MBC3 {
 impl Drop for MBC3 {
     fn drop(&mut self) {
         if !self.battery {
-            return
+            return;
         }
 
         // Don't bother handling errors here
@@ -166,7 +173,7 @@ impl MBC for MBC3 {
                     }
                     self.ram[self.adjusted_ram_addr(addr)]
                 }
-            },
+            }
             _ => unreachable!("Tried to read non-existent mbc address"),
         }
     }
@@ -175,7 +182,7 @@ impl MBC for MBC3 {
         match addr {
             0x0000...0x1FFF => {
                 self.ram_and_timer_enabled = value & 0x0F == 0x0A;
-            },
+            }
             0x2000...0x3FFF => {
                 let rom_bank = value & 0x7F;
                 self.rom_bank = if rom_bank == 0 {
@@ -183,20 +190,20 @@ impl MBC for MBC3 {
                 } else {
                     rom_bank
                 };
-            },
+            }
             0x4000...0x5FFF => {
                 match value {
                     0x00...0x03 | 0x08...0x0C => self.ram_bank = value,
                     _ => panic!("Writing unknown ram bank number!"),
                 }
-            },
+            }
             0x6000...0x7FFF => {
                 if self.primed_to_latch_rtc && value == 0x01 {
                     self.latch_rtc();
                 }
 
                 self.primed_to_latch_rtc = value != 0;
-            },
+            }
             0xA000...0xBFFF => {
                 if !self.ram_and_timer_enabled {
                     panic!("Attempting to write external ram/RTC, which isn't enabled!");
@@ -212,7 +219,7 @@ impl MBC for MBC3 {
                     let adj_addr = self.adjusted_ram_addr(addr);
                     self.ram[adj_addr] = value;
                 }
-            },
+            }
             _ => unreachable!("Tried to write non-existent mbc address"),
         }
     }

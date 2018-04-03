@@ -8,9 +8,7 @@ pub struct Sound {
 
 impl Sound {
     pub fn new() -> Self {
-        Self {
-            noise: Noise::new(),
-        }
+        Self { noise: Noise::new() }
     }
 
     pub fn read_byte(&self, addr: u16) -> u8 {

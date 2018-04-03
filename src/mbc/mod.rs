@@ -3,12 +3,12 @@ mod mbc1;
 mod mbc2;
 mod mbc3;
 
-use std::fs::File;
-use std::io::Read;
-use mbc::rom::ROM;
 use mbc::mbc1::MBC1;
 use mbc::mbc2::MBC2;
 use mbc::mbc3::MBC3;
+use mbc::rom::ROM;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 
 // http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header#0147_-_Cartridge_Type
@@ -61,7 +61,11 @@ pub fn new(cart_path: &str) -> Box<MBC> {
 }
 
 pub fn build_save_path(cart_path: &str) -> String {
-    String::from(Path::new(cart_path).with_extension("gbsave-rustyboy").to_string_lossy())
+    String::from(
+        Path::new(cart_path)
+            .with_extension("gbsave-rustyboy")
+            .to_string_lossy(),
+    )
 }
 
 fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
@@ -71,7 +75,7 @@ fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {
     };
 }
 
-pub trait MBC : Send {
+pub trait MBC: Send {
     fn read_byte(&self, addr: u16) -> u8;
     fn write_byte(&mut self, addr: u16, value: u8);
 }

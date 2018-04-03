@@ -1,10 +1,10 @@
-use std::sync::mpsc;
 use clock::Clock;
 use gpu::GPU;
 use input::{Input, Key};
+use mbc::{self, MBC};
 use serial::Serial;
 use sound::Sound;
-use mbc::{self, MBC};
+use std::sync::mpsc;
 
 // Gameboy only needs 0x2000 working RAM
 // In the future if CGB support is needed,
@@ -27,7 +27,11 @@ pub struct MMU {
 }
 
 impl MMU {
-    pub fn new(cart_path: &str, screen_data_sender: mpsc::SyncSender<Vec<u8>>, key_data_receiver: mpsc::Receiver<Key>) -> Self {
+    pub fn new(
+        cart_path: &str,
+        screen_data_sender: mpsc::SyncSender<Vec<u8>>,
+        key_data_receiver: mpsc::Receiver<Key>,
+    ) -> Self {
         Self {
             mbc: mbc::new(cart_path),
             wram: [0_u8; WRAM_SIZE],
@@ -68,9 +72,9 @@ impl MMU {
             0xFF04...0xFF07 => self.clock.read_byte(addr), // read Clock values
             0xFF0F => self.interrupt_flags, // Interrupt flags
             0xFF10...0xFF26 => self.sound.read_byte(addr), // Sound control
-//            0xFF30...0xFF3F => 0, // Sound wave pattern RAM
+            // 0xFF30...0xFF3F => 0, // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.read_control(addr),
-//            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (read) (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
+            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (read) (CGB only) not implemented"),
             0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize], // High RAM
             0xFFFF => self.interrupt_enabled, // Interrupt enable
             _ => 0,
@@ -93,10 +97,15 @@ impl MMU {
             0xFF04...0xFF07 => self.clock.write_byte(addr, value), // write Clock values
             0xFF0F => self.interrupt_flags = value, // Interrupt flags
             0xFF10...0xFF26 => self.sound.write_byte(addr, value), // Sound control
-//            0xFF30...0xFF3F => (), // Sound wave pattern RAM
+            // 0xFF30...0xFF3F => (), // Sound wave pattern RAM
             0xFF46 => self.dma_into_oam(value),
             0xFF40...0xFF45 | 0xFF47...0xFF4B => self.gpu.write_control(addr, value),
-//            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}", addr), // Memory mapped I/O CGB ONLY
+            0xFF4C...0xFF7F => {
+                panic!(
+                    "MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}",
+                    addr
+                )
+            }
             0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize] = value, // High RAM
             0xFFFF => self.interrupt_enabled = value, // Interrupt enable
             _ => (),
@@ -104,10 +113,8 @@ impl MMU {
     }
 
     pub fn write_word(&mut self, addr: u16, value: u16) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-        self.write_byte(addr, (value & 0xFF) as u8);
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-        self.write_byte(addr + 1, (value >> 8) as u8);
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))] self.write_byte(addr, (value & 0xFF) as u8);
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))] self.write_byte(addr + 1, (value >> 8) as u8);
     }
 
     pub fn get_triggered_interrupts(&self) -> u8 {
@@ -121,7 +128,7 @@ impl MMU {
     fn dma_into_oam(&mut self, dma_start: u8) {
         // DMA start can be addressed as 0x0000, 0x0100, 0x0200, etc
         let actual_dma_start = u16::from(dma_start) << 8; // turns 0x01 to 0x0100
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         for i in 0..(GPU::OAM_SIZE as u16) {
             let value = self.read_byte(actual_dma_start + i);
             self.gpu.write_oam(i, value);
