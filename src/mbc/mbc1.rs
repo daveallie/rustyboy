@@ -71,13 +71,9 @@ impl MBC1 {
             return;
         }
 
-        let mut file = match File::open(path) {
-            Ok(f) => f,
-            Err(_) => panic!("Failed to load save data!"),
-        };
-
+        let mut file = File::open(path).expect("Failed to load save data!");
         let mut new_ram: Vec<u8> = Vec::with_capacity(self.ram.len());
-        file.read_to_end(&mut new_ram).unwrap();
+        file.read_to_end(&mut new_ram).expect("Failed to read ram!");
         new_ram.resize(self.ram.len(), 0);
         self.ram = new_ram;
     }
@@ -90,7 +86,7 @@ impl Drop for MBC1 {
         }
 
         // Don't bother handling errors here
-        let _ = File::create(&self.save_path).and_then(|mut file| file.write_all(&self.ram.as_slice()));
+        let _ = File::create(&self.save_path).and_then(|mut file| file.write_all(self.ram.as_slice()));
     }
 }
 

@@ -49,10 +49,7 @@ impl CPU {
         loop {
             if cycles_since_sleep >= Self::ADJUST_SPEED_EVERY_N_CYCLES {
                 if self.screen_exit_receiver.try_recv().is_ok() { break }
-                match self.throttled_state_receiver.try_recv() {
-                    Ok(v) => self.throttled = v,
-                    _ => (),
-                }
+                if let Ok(v) = self.throttled_state_receiver.try_recv() { self.throttled = v }
 
                 if self.throttled {
                     let time_since_last_set_start = Instant::now() - start_of_last_n_cycles;

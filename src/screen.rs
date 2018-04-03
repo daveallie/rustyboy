@@ -56,11 +56,7 @@ impl Screen {
         self.main_screen_loop();
         let _ = self.screen_exit_sender.send(());
         loop {
-            match self.screen_data_receiver.try_recv() {
-                Ok(_) => (),
-                Err(mpsc::TryRecvError::Empty) => (),
-                Err(mpsc::TryRecvError::Disconnected) => break,
-            }
+            if let Err(mpsc::TryRecvError::Disconnected) = self.screen_data_receiver.try_recv() { break }
         }
     }
 

@@ -82,10 +82,19 @@ impl MBC3 {
         }
 
         let days = seconds_to_now / 3600 / 24;
-        self.rtc_register[0] = (seconds_to_now % 60) as u8;
-        self.rtc_register[1] = ((seconds_to_now / 60) % 60) as u8;
-        self.rtc_register[2] = ((seconds_to_now / 3600) % 24) as u8;
-        self.rtc_register[3] = (days & 0xFF) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let seconds = (seconds_to_now % 60) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let minutes = ((seconds_to_now / 60) % 60) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let hours = ((seconds_to_now / 3600) % 24) as u8;
+        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        let trunc_days = (days & 0xFF) as u8;
+
+        self.rtc_register[0] = seconds;
+        self.rtc_register[1] = minutes;
+        self.rtc_register[2] = hours;
+        self.rtc_register[3] = trunc_days;
         self.rtc_register[4] &= 0xFE;
 
         if days & 0x0100 > 0 {
@@ -115,15 +124,11 @@ impl MBC3 {
             return;
         }
 
-        let mut file = match File::open(path) {
-            Ok(f) => f,
-            Err(_) => panic!("Failed to load save data!"),
-        };
-
-        file.read_exact(&mut self.rtc_register).unwrap();
+        let mut file = File::open(path).expect("Failed to load save data!");
+        file.read_exact(&mut self.rtc_register).expect("Failed to read rtc data!");
         if self.ram_available {
             let mut new_ram: Vec<u8> = Vec::with_capacity(self.ram.len());
-            file.read_to_end(&mut new_ram).unwrap();
+            file.read_to_end(&mut new_ram).expect("Failed to read ram!");
             new_ram.resize(self.ram.len(), 0);
             self.ram = new_ram;
         }
@@ -139,7 +144,7 @@ impl Drop for MBC3 {
         // Don't bother handling errors here
         if let Ok(mut file) = File::create(&self.save_path) {
             let _ = file.write_all(&self.rtc_register);
-            let _ = file.write_all(&self.ram.as_slice());
+            let _ = file.write_all(self.ram.as_slice());
         }
     }
 }

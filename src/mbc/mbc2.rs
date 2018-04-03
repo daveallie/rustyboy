@@ -51,12 +51,8 @@ impl MBC2 {
             return;
         }
 
-        let mut file = match File::open(path) {
-            Ok(f) => f,
-            Err(_) => panic!("Failed to load save data!"),
-        };
-
-        file.read_exact(&mut self.ram).unwrap();
+        let mut file = File::open(path).expect("Failed to load save data!");
+        file.read_exact(&mut self.ram).expect("Failed to read ram!");
     }
 }
 

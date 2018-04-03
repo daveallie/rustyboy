@@ -124,7 +124,7 @@ impl GPU {
     }
 
     fn process_cycles(&mut self, cycles: u8) {
-        let cycles_u32 = cycles as u32;
+        let cycles_u32 = u32::from(cycles);
         if self.render_clock + cycles_u32 >= 114 {
             self.render_clock =  (self.render_clock + cycles_u32) % 114;
             self.increment_line();
@@ -161,11 +161,9 @@ impl GPU {
             self.interrupt |= 0x02;
         }
 
-        if self.ly >= 144 { // V-Blank
-            if self.ly == 144 {
-                self.interrupt |= 0x01; // Mark V-Blank interrupt
-                self.render_screen();
-            }
+        if self.ly == 144 { // V-Blank
+            self.interrupt |= 0x01; // Mark V-Blank interrupt
+            self.render_screen();
         }
     }
 
@@ -227,7 +225,7 @@ impl GPU {
     }
 
     fn rendering_window(&self, x: u32) -> bool {
-        self.is_window_on() && self.win_y <= self.ly && self.win_x as u32 <= x + 7
+        self.is_window_on() && self.win_y <= self.ly && u32::from(self.win_x) <= x + 7
     }
 
     fn get_tile_addr(&self, tile_number: u8) -> u16 {
