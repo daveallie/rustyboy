@@ -29,3 +29,5 @@ performant languages. This project exists as a challenge to myself, could I buil
 - http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
 - https://exez.in/gameboy-dma
 - http://bgb.bircd.org/pandocs.htm
+- http://www.devrs.com/gb/files/hosted/GBSOUND.txt
+- https://gist.github.com/drhelius/3652407

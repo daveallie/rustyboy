@@ -18,6 +18,7 @@ mod mmu;
 mod register;
 mod screen;
 mod serial;
+mod sound;
 #[cfg(feature = "debugger")]
 mod debugger;
 

@@ -3,6 +3,7 @@ use clock::Clock;
 use gpu::GPU;
 use input::{Input, Key};
 use serial::Serial;
+use sound::Sound;
 use mbc::{self, MBC};
 
 // Gameboy only needs 0x2000 working RAM
@@ -20,6 +21,7 @@ pub struct MMU {
     serial: Serial,
     clock: Clock,
     input: Input,
+    sound: Sound,
     interrupt_flags: u8,
     interrupt_enabled: u8,
 }
@@ -34,6 +36,7 @@ impl MMU {
             serial: Serial::new(),
             clock: Clock::new(),
             input: Input::new(key_data_receiver),
+            sound: Sound::new(),
             interrupt_flags: 0,
             interrupt_enabled: 0,
         }
@@ -64,7 +67,7 @@ impl MMU {
             0xFF01...0xFF02 => self.serial.read(addr), // Serial read
             0xFF04...0xFF07 => self.clock.read_byte(addr), // read Clock values
             0xFF0F => self.interrupt_flags, // Interrupt flags
-//            0xFF10...0xFF26 => 0, // Sound control
+            0xFF10...0xFF26 => self.sound.read_byte(addr), // Sound control
 //            0xFF30...0xFF3F => 0, // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.read_control(addr),
 //            0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (read) (CGB only) not implemented"), // Memory mapped I/O CGB ONLY
@@ -89,7 +92,7 @@ impl MMU {
             0xFF01...0xFF02 => self.serial.write(addr, value), // Serial write
             0xFF04...0xFF07 => self.clock.write_byte(addr, value), // write Clock values
             0xFF0F => self.interrupt_flags = value, // Interrupt flags
-//            0xFF10...0xFF26 => (), // Sound control
+            0xFF10...0xFF26 => self.sound.write_byte(addr, value), // Sound control
 //            0xFF30...0xFF3F => (), // Sound wave pattern RAM
             0xFF46 => self.dma_into_oam(value),
             0xFF40...0xFF45 | 0xFF47...0xFF4B => self.gpu.write_control(addr, value),
