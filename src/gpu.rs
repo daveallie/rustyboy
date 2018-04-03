@@ -2,9 +2,12 @@ use screen::Screen;
 use std::sync::mpsc;
 
 const VIDEO_RAM_SIZE: usize = 0x2000;
+const SCREEN_PIXELS: usize = (Screen::WIDTH * Screen::HEIGHT) as usize;
+const SCREEN_BUFFER: usize = 3 * SCREEN_PIXELS;
 
 pub struct GPU {
-    next_screen_buffer: Vec<u8>,
+    next_screen_pixel_palette: [u8; SCREEN_PIXELS],
+    next_screen_buffer: [u8; SCREEN_BUFFER],
     video_ram: [u8; VIDEO_RAM_SIZE],
     bg_palette: u8,
     bg_palette_map: [(u8, u8, u8); 4],
@@ -31,7 +34,8 @@ impl GPU {
 
     pub fn new(screen_data_sender: mpsc::SyncSender<Vec<u8>>) -> Self {
         Self {
-            next_screen_buffer: vec![0_u8; (3 * Screen::WIDTH * Screen::HEIGHT) as usize],
+            next_screen_pixel_palette: [0_u8; SCREEN_PIXELS],
+            next_screen_buffer: [0_u8; SCREEN_BUFFER],
             video_ram: [0_u8; VIDEO_RAM_SIZE],
             bg_palette: 0,
             bg_palette_map: build_palette_map(0),
@@ -223,9 +227,8 @@ impl GPU {
             };
 
             let palette_color_id = pixel_data_1 | pixel_data_2;
-            let colors: (u8, u8, u8) = self.bg_palette_map[palette_color_id as usize];
-
-            self.set_pixel_color_next_screen_buffer(x, colors);
+            let palette_map = self.bg_palette_map;
+            self.set_pixel_color_next_screen_buffer(x, palette_color_id, &palette_map);
         }
     }
 
@@ -308,18 +311,18 @@ impl GPU {
                     continue;
                 }
 
-                let colors: (u8, u8, u8) = if use_palette_0 {
-                    self.obj_palette_0_map[palette_color_id as usize]
+                let palette_map = if use_palette_0 {
+                    self.obj_palette_0_map
                 } else {
-                    self.obj_palette_1_map[palette_color_id as usize]
+                    self.obj_palette_1_map
                 };
-
                 let x = sprite_x.wrapping_add(x_pixel_in_tile);
 
-                if sprite_under_bg && palette_color_id == 0 {
+                let x_pixel = u32::from(x);
+                if sprite_under_bg && self.get_palette_color_id(x_pixel) > 0 {
                     continue;
                 }
-                self.set_pixel_color_next_screen_buffer(u32::from(x), colors);
+                self.set_pixel_color_next_screen_buffer(x_pixel, palette_color_id, &palette_map);
             }
         }
     }
@@ -348,12 +351,25 @@ impl GPU {
         }
     }
 
-    fn set_pixel_color_next_screen_buffer(&mut self, x_pixel: u32, colors: (u8, u8, u8)) {
-        let base_addr = (u32::from(self.ly) * Screen::WIDTH + x_pixel) as usize * 3;
-        let (c1, c2, c3) = colors;
-        self.next_screen_buffer[base_addr] = c1;
-        self.next_screen_buffer[base_addr + 1] = c2;
-        self.next_screen_buffer[base_addr + 2] = c3;
+    fn get_palette_color_id(&self, x_pixel: u32) -> u8 {
+        let pixel_addr = (u32::from(self.ly) * Screen::WIDTH + x_pixel) as usize;
+        self.next_screen_pixel_palette[pixel_addr]
+    }
+
+    fn set_pixel_color_next_screen_buffer(
+        &mut self,
+        x_pixel: u32,
+        palette_color_id: u8,
+        palette_map: &[(u8, u8, u8); 4],
+    ) {
+        let pixel_addr = (u32::from(self.ly) * Screen::WIDTH + x_pixel) as usize;
+        self.next_screen_pixel_palette[pixel_addr] = palette_color_id;
+
+        let base_buffer_addr = pixel_addr * 3;
+        let (c1, c2, c3): (u8, u8, u8) = palette_map[palette_color_id as usize];
+        self.next_screen_buffer[base_buffer_addr] = c1;
+        self.next_screen_buffer[base_buffer_addr + 1] = c2;
+        self.next_screen_buffer[base_buffer_addr + 2] = c3;
     }
 
     fn render_screen(&self) {
