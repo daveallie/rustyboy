@@ -1,0 +1,14 @@
+language: rust
+cache: cargo
+matrix:
+  include:
+  - rust: stable
+  - rust: nightly
+    env: BUILD_FEATURES=clippy
+before_script:
+  - export PATH="$PATH:$HOME/.cargo/bin"
+  - rustup component add rustfmt-preview
+script:
+  - cargo fmt -- --write-mode=diff
+  - cargo build --verbose --features "${BUILD_FEATURES}"
+  - cargo test --verbose

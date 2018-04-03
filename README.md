@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/daveallie/rustyboy.svg?branch=master)](https://travis-ci.org/daveallie/rustyboy)
+
 # Rustyboy
 
 Gameboy emulator written in Rust.
