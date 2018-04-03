@@ -69,7 +69,7 @@ impl Screen {
             }
 
             // Sleep for 1/60th of a second
-            thread::sleep(Duration::new(0, 16_666));
+            thread::sleep(Duration::new(0, 16_666_666));
         }
     }
 
