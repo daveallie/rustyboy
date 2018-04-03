@@ -59,11 +59,7 @@ impl GPU {
             return
         }
 
-        let mut cycles_to_process = cycles;
-
-        while cycles_to_process > 0 {
-            cycles_to_process -= self.process_cycles(u32::from(cycles_to_process));
-        }
+        self.process_cycles(cycles);
     }
 
     pub fn read_oam(&self, addr: u16) -> u8 {
@@ -127,20 +123,15 @@ impl GPU {
         }
     }
 
-    fn process_cycles(&mut self, cycles: u32) -> u8 {
-        if self.render_clock + cycles >= 114 {
-            #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-            let used_cycles = (self.render_clock + cycles - 114) as u8;
-            self.render_clock = 0;
+    fn process_cycles(&mut self, cycles: u8) {
+        let cycles_u32 = cycles as u32;
+        if self.render_clock + cycles_u32 >= 114 {
+            self.render_clock =  (self.render_clock + cycles_u32) % 114;
             self.increment_line();
             self.render_background();
             self.render_sprites();
-            used_cycles
         } else {
-            self.render_clock += cycles;
-            #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
-            let cycles_u8 = cycles as u8;
-            cycles_u8
+            self.render_clock += cycles_u32;
         }
     }
 
@@ -173,8 +164,8 @@ impl GPU {
         if self.ly >= 144 { // V-Blank
             if self.ly == 144 {
                 self.interrupt |= 0x01; // Mark V-Blank interrupt
+                self.render_screen();
             }
-            self.render_screen();
         }
     }
 
