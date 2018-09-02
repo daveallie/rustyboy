@@ -45,11 +45,10 @@ impl CPU {
     }
 
     pub fn main_loop(&mut self) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation, cast_sign_loss))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation, cast_sign_loss))]
         let time_for_n_cycles = Duration::new(
             0,
-            (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) /
-                 f64::from(Self::CYCLE_SPEED)) as u32,
+            (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32,
         );
 
         let mut cycles_since_sleep: u32 = 0;
@@ -159,10 +158,7 @@ impl CPU {
             }
         }
 
-        panic!(
-            "Unknown interrupt was not handled! 0b{:08b}",
-            interrupt_flags
-        );
+        panic!("Unknown interrupt was not handled! 0b{:08b}", interrupt_flags);
     }
 
     fn get_byte(&mut self) -> u8 {
@@ -172,7 +168,7 @@ impl CPU {
     }
 
     fn get_signed_byte(&mut self) -> i8 {
-        #[cfg_attr(feature="clippy", allow(cast_sign_loss, cast_possible_wrap))]
+        #[cfg_attr(feature = "clippy", allow(cast_sign_loss, cast_possible_wrap))]
         let signed_byte = self.get_byte() as i8;
         signed_byte
     }
@@ -195,9 +191,12 @@ impl CPU {
     }
 
     fn jr(&mut self) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_wrap))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_wrap))]
         let n = self.get_byte() as i8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_wrap, cast_possible_truncation, cast_sign_loss))]
+        #[cfg_attr(
+            feature = "clippy",
+            allow(cast_possible_wrap, cast_possible_truncation, cast_sign_loss)
+        )]
         let new_pc = (u32::from(self.reg.pc) as i32 + i32::from(n)) as u16;
         self.reg.pc = new_pc;
     }

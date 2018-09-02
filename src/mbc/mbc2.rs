@@ -91,11 +91,7 @@ impl MBC for MBC2 {
             0x2000...0x3FFF => {
                 if addr & 0x0100 > 1 {
                     let rom_bank = value & 0x0F;
-                    self.rom_bank = if rom_bank == 0 {
-                        rom_bank + 1
-                    } else {
-                        rom_bank
-                    };
+                    self.rom_bank = if rom_bank == 0 { rom_bank + 1 } else { rom_bank };
                 }
             }
             0xA000...0xA1FF => {

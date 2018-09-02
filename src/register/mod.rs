@@ -48,9 +48,9 @@ impl Registers {
     }
 
     pub fn set_af(&mut self, value: u16) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let first_byte = (value >> 8) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let second_byte = (value & 0x00FF) as u8;
 
         self.a = first_byte;
@@ -62,9 +62,9 @@ impl Registers {
     }
 
     pub fn set_bc(&mut self, value: u16) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let first_byte = (value >> 8) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let second_byte = (value & 0x00FF) as u8;
 
         self.b = first_byte;
@@ -76,9 +76,9 @@ impl Registers {
     }
 
     pub fn set_de(&mut self, value: u16) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let first_byte = (value >> 8) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let second_byte = (value & 0x00FF) as u8;
 
         self.d = first_byte;
@@ -90,9 +90,9 @@ impl Registers {
     }
 
     pub fn set_hl(&mut self, value: u16) {
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let first_byte = (value >> 8) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let second_byte = (value & 0x00FF) as u8;
 
         self.h = first_byte;

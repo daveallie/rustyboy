@@ -167,13 +167,10 @@ impl Input {
 
         if self.io_register & 0x10 == 0 {
             // bit 4 is low, check R L U D keys
-            let row_res: u8 = self.col_1_keys()
+            let row_res: u8 = self
+                .col_1_keys()
                 .iter()
-                .filter_map(|key| if key.is_down {
-                    None
-                } else {
-                    Some(key.key_type.value())
-                })
+                .filter_map(|key| if key.is_down { None } else { Some(key.key_type.value()) })
                 .fold(0, |acc, key_value| acc | key_value);
 
             self.io_register |= row_res;
@@ -181,13 +178,10 @@ impl Input {
 
         if self.io_register & 0x20 == 0 {
             // bit 5 is low, check A B Se St keys
-            let row_res: u8 = self.col_0_keys()
+            let row_res: u8 = self
+                .col_0_keys()
                 .iter()
-                .filter_map(|key| if key.is_down {
-                    None
-                } else {
-                    Some(key.key_type.value())
-                })
+                .filter_map(|key| if key.is_down { None } else { Some(key.key_type.value()) })
                 .fold(0, |acc, key_value| acc | key_value);
 
             self.io_register |= row_res;

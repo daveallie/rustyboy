@@ -19,11 +19,7 @@ pub struct MBC1 {
 
 impl MBC1 {
     pub fn new(cart_path: &str, cart_data: Vec<u8>, ram_available: bool, ram_size: usize, battery: bool) -> Self {
-        let ram = if ram_available {
-            vec![0; ram_size]
-        } else {
-            vec![]
-        };
+        let ram = if ram_available { vec![0; ram_size] } else { vec![] };
 
         let mut res = Self {
             save_path: mbc::build_save_path(cart_path),

@@ -50,10 +50,7 @@ impl Registers {
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::H, (a & 0x0F) < ((input & 0x0F) + carry_bit));
         self.set_flag(Flags::N, true);
-        self.set_flag(
-            Flags::C,
-            u16::from(a) < (u16::from(input) + u16::from(carry_bit)),
-        );
+        self.set_flag(Flags::C, u16::from(a) < (u16::from(input) + u16::from(carry_bit)));
         self.a = result;
     }
 
@@ -135,7 +132,7 @@ impl Registers {
         self.set_flag(Flags::Z, false);
         self.set_flag(Flags::H, (input16_adj ^ input8_adj ^ result) & 0x10 != 0);
         self.set_flag(Flags::C, (input16_adj ^ input8_adj ^ result) & 0x100 != 0);
-        #[cfg_attr(feature="clippy", allow(cast_sign_loss, cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_sign_loss, cast_possible_truncation))]
         let casted_result = result as u16;
         casted_result
     }
@@ -209,11 +206,7 @@ impl Registers {
     // Rotate n left. Old bit 7 to Carry flag.
     pub fn alu_rlc(&mut self, input: u8) -> u8 {
         let msb_was_set = input & 0x80 > 0;
-        let result = if msb_was_set {
-            input << 1 | 0x01
-        } else {
-            input << 1
-        };
+        let result = if msb_was_set { input << 1 | 0x01 } else { input << 1 };
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::C, msb_was_set);
         self.set_flag(Flags::H, false);
@@ -239,11 +232,7 @@ impl Registers {
     // Rotate n right. Old bit 0 to Carry flag.
     pub fn alu_rrc(&mut self, input: u8) -> u8 {
         let lsb_was_set = input & 0x01 > 0;
-        let result = if lsb_was_set {
-            input >> 1 | 0x80
-        } else {
-            input >> 1
-        };
+        let result = if lsb_was_set { input >> 1 | 0x80 } else { input >> 1 };
 
         self.set_flag(Flags::Z, result == 0);
         self.set_flag(Flags::C, lsb_was_set);

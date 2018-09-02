@@ -5,10 +5,7 @@ pub struct Serial {
 
 impl Serial {
     pub fn new() -> Self {
-        Self {
-            data: 0,
-            control: 0,
-        }
+        Self { data: 0, control: 0 }
     }
 
     pub fn read(&self, addr: u16) -> u8 {

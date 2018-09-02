@@ -2,7 +2,7 @@ use mbc::{self, MBC};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::time::{UNIX_EPOCH, SystemTime, Duration};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers#MBC1_.28max_2MByte_ROM_and.2For_32KByte_RAM.29
 
@@ -22,11 +22,7 @@ pub struct MBC3 {
 
 impl MBC3 {
     pub fn new(cart_path: &str, cart_data: Vec<u8>, ram_available: bool, ram_size: usize, battery: bool) -> Self {
-        let ram = if ram_available {
-            vec![0; ram_size]
-        } else {
-            vec![]
-        };
+        let ram = if ram_available { vec![0; ram_size] } else { vec![] };
 
         let mut res = Self {
             save_path: mbc::build_save_path(cart_path),
@@ -83,13 +79,13 @@ impl MBC3 {
         }
 
         let days = seconds_to_now / 3600 / 24;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let seconds = (seconds_to_now % 60) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let minutes = ((seconds_to_now / 60) % 60) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let hours = ((seconds_to_now / 3600) % 24) as u8;
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let trunc_days = (days & 0xFF) as u8;
 
         self.rtc_register[0] = seconds;
@@ -108,10 +104,11 @@ impl MBC3 {
     }
 
     fn reset_rtc(&mut self) {
-        let seconds_to_now = u64::from(self.rtc_register[0]) + u64::from(self.rtc_register[1]) * 60 +
-            u64::from(self.rtc_register[2]) * 3600 +
-            u64::from(self.rtc_register[3]) * 3600 * 24 +
-            if self.rtc_register[4] & 0x01 > 0 {
+        let seconds_to_now = u64::from(self.rtc_register[0])
+            + u64::from(self.rtc_register[1]) * 60
+            + u64::from(self.rtc_register[2]) * 3600
+            + u64::from(self.rtc_register[3]) * 3600 * 24
+            + if self.rtc_register[4] & 0x01 > 0 {
                 0x0100 * 3600 * 24
             } else {
                 0
@@ -130,9 +127,8 @@ impl MBC3 {
         }
 
         let mut file = File::open(path).expect("Failed to load save data!");
-        file.read_exact(&mut self.rtc_register).expect(
-            "Failed to read rtc data!",
-        );
+        file.read_exact(&mut self.rtc_register)
+            .expect("Failed to read rtc data!");
         if self.ram_available {
             let mut new_ram: Vec<u8> = Vec::with_capacity(self.ram.len());
             file.read_to_end(&mut new_ram).expect("Failed to read ram!");
@@ -185,11 +181,7 @@ impl MBC for MBC3 {
             }
             0x2000...0x3FFF => {
                 let rom_bank = value & 0x7F;
-                self.rom_bank = if rom_bank == 0 {
-                    rom_bank + 1
-                } else {
-                    rom_bank
-                };
+                self.rom_bank = if rom_bank == 0 { rom_bank + 1 } else { rom_bank };
             }
             0x4000...0x5FFF => {
                 let trunc_value = value & 0x0F;

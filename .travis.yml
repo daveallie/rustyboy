@@ -9,6 +9,6 @@ before_script:
   - export PATH="$PATH:$HOME/.cargo/bin"
   - rustup component add rustfmt-preview
 script:
-  - cargo fmt -- --write-mode=diff
+  - cargo fmt -- --check
   - cargo build --verbose --features "${BUILD_FEATURES}"
   - cargo test --verbose

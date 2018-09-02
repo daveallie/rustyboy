@@ -1,20 +1,29 @@
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", deny(clippy_pedantic))]
-#![cfg_attr(feature="clippy", allow(missing_docs_in_private_items, similar_names, needless_range_loop))]
-#![deny(missing_debug_implementations, missing_copy_implementations, trivial_casts, trivial_numeric_casts)]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", deny(clippy_pedantic))]
+#![cfg_attr(
+    feature = "clippy",
+    allow(missing_docs_in_private_items, similar_names, needless_range_loop)
+)]
+#![deny(
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts
+)]
 #![deny(unsafe_code, unused_import_braces, unused_qualifications)]
-
 // until I have logging
-#![cfg_attr(feature="clippy", allow(print_stdout))]
+#![cfg_attr(feature = "clippy", allow(print_stdout))]
 
 extern crate glium;
+extern crate glutin;
 #[cfg(feature = "frame-capture")]
 extern crate image;
-extern crate glutin;
 
 mod clock;
 mod cpu;
+#[cfg(feature = "debugger")]
+mod debugger;
 mod gpu;
 mod input;
 mod mbc;
@@ -23,15 +32,13 @@ mod register;
 mod screen;
 mod serial;
 mod sound;
-#[cfg(feature = "debugger")]
-mod debugger;
 
 use cpu::CPU;
 #[cfg(feature = "debugger")]
 use debugger::Debugger;
 use screen::Screen;
-use std::{thread, env};
 use std::sync::mpsc;
+use std::{env, thread};
 
 fn main() {
     let cart_path = match env::args().nth(1) {
@@ -65,7 +72,9 @@ fn main() {
 
 #[cfg(not(feature = "debugger"))]
 fn run(mut cpu: CPU, mut screen: Screen) {
-    let cpu_thread = thread::spawn(move || { cpu.main_loop(); });
+    let cpu_thread = thread::spawn(move || {
+        cpu.main_loop();
+    });
 
     screen.start_loop();
     if let Err(e) = cpu_thread.join() {

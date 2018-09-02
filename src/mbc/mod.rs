@@ -1,7 +1,7 @@
-mod rom;
 mod mbc1;
 mod mbc2;
 mod mbc3;
+mod rom;
 
 use mbc::mbc1::MBC1;
 use mbc::mbc2::MBC2;
@@ -38,9 +38,9 @@ pub fn new(cart_path: &str) -> Box<MBC> {
 
     let ram_size: usize = match cart_data[0x149] {
         0x00 => 0,
-        0x01 => 0x800, // 2_048
-        0x02 => 0x2000, // 8_192
-        0x03 => 0x8000, // 32_768
+        0x01 => 0x800,    // 2_048
+        0x02 => 0x2000,   // 8_192
+        0x03 => 0x8000,   // 32_768
         0x04 => 0x2_0000, // 131_072
         0x05 => 0x1_0000, // 65_536
         _ => unreachable!("Unknown cart ram size!"),
@@ -61,11 +61,7 @@ pub fn new(cart_path: &str) -> Box<MBC> {
 }
 
 pub fn build_save_path(cart_path: &str) -> String {
-    String::from(
-        Path::new(cart_path)
-            .with_extension("gbsave-rustyboy")
-            .to_string_lossy(),
-    )
+    String::from(Path::new(cart_path).with_extension("gbsave-rustyboy").to_string_lossy())
 }
 
 fn load_cart(cart_path: &str, buffer: &mut Vec<u8>) {

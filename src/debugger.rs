@@ -36,11 +36,7 @@ impl Debugger {
             if self.output {
                 print!("{} ", self.current_steps);
                 let addr = self.cpu.reg.pc;
-                println!(
-                    "instr: 0x{:X} -- opcode: 0x{:X}",
-                    addr,
-                    self.cpu.mmu.read_byte(addr)
-                );
+                println!("instr: 0x{:X} -- opcode: 0x{:X}", addr, self.cpu.mmu.read_byte(addr));
             }
             self.cpu.run_cycle();
             self.current_steps += 1;
@@ -115,8 +111,7 @@ impl Debugger {
                 self.debug_after_cycles_enabled = false;
                 self.debugging = false;
             }
-            Some("reg") |
-            Some("registers") => {
+            Some("reg") | Some("registers") => {
                 let action = words.next();
 
                 if action.is_some() && action.unwrap() == "write" {
@@ -158,10 +153,7 @@ impl Debugger {
                 }
             }
             Some("lastbyte") => {
-                output(&format!(
-                    "0x{:X}\n",
-                    self.cpu.mmu.read_byte(self.cpu.reg.pc - 1)
-                ));
+                output(&format!("0x{:X}\n", self.cpu.mmu.read_byte(self.cpu.reg.pc - 1)));
             }
             Some("rb") => {
                 let addr = read_num(words.next().unwrap_or("0")) as u16;

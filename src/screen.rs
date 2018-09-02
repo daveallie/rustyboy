@@ -102,10 +102,7 @@ impl Screen {
             }
 
             // Sleep for 1/120th of a second (or 1/15th of that if unthrottled)
-            thread::sleep(Duration::new(
-                0,
-                if self.throttled { 8_333_333 } else { 555_555 },
-            ));
+            thread::sleep(Duration::new(0, if self.throttled { 8_333_333 } else { 555_555 }));
         }
     }
 
@@ -114,11 +111,8 @@ impl Screen {
         let mut throttled = self.throttled;
         let key_sender = self.key_data_sender.clone();
 
-        self.events_loop.poll_events(
-            |ev| if let glutin::Event::WindowEvent {
-                event, ..
-            } = ev
-            {
+        self.events_loop.poll_events(|ev| {
+            if let glutin::Event::WindowEvent { event, .. } = ev {
                 match event {
                     glutin::WindowEvent::CloseRequested => closed = true,
                     glutin::WindowEvent::KeyboardInput { input, .. } => {
@@ -186,8 +180,8 @@ impl Screen {
                     }
                     _ => (),
                 }
-            },
-        );
+            }
+        });
 
         if throttled != self.throttled {
             self.throttled = throttled;
@@ -200,10 +194,7 @@ impl Screen {
     fn draw_data(&mut self, data: &[u8]) {
         if !self.throttled {
             let now = Instant::now();
-            if now.duration_since(self.last_screen_render).lt(
-                &self.min_render_space,
-            )
-            {
+            if now.duration_since(self.last_screen_render).lt(&self.min_render_space) {
                 return;
             }
 
@@ -217,8 +208,8 @@ impl Screen {
             format: glium::texture::ClientFormat::U8U8U8,
         };
 
-        #[cfg(feature = "frame-capture")] self.save_frame(data);
-
+        #[cfg(feature = "frame-capture")]
+        self.save_frame(data);
 
         self.texture.write(
             glium::Rect {
@@ -235,11 +226,11 @@ impl Screen {
         // I need to double the width and height as I'm developing on a retina display
         // only renders to quarter of window otherwise
 
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let width = i32::from(unsigned_width as u16);
-        #[cfg_attr(feature="clippy", allow(cast_possible_truncation))]
+        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let height = i32::from(unsigned_height as u16);
-        #[cfg_attr(feature="clippy", allow(cast_sign_loss))]
+        #[cfg_attr(feature = "clippy", allow(cast_sign_loss))]
         let blit_target = glium::BlitTarget {
             left: 0,
             bottom: height as u32,
@@ -260,9 +251,7 @@ impl Screen {
     fn save_frame(&mut self, data: &[u8]) {
         let image = image::ImageBuffer::from_raw(Self::WIDTH, Self::HEIGHT, data.to_vec()).unwrap();
         let image = image::DynamicImage::ImageRgb8(image);
-        let mut output = File::create(&Path::new(
-            &format!("frames/frame-{:010}.png", self.frame_id),
-        )).unwrap();
+        let mut output = File::create(&Path::new(&format!("frames/frame-{:010}.png", self.frame_id))).unwrap();
         self.frame_id += 1;
         image.save(&mut output, image::ImageFormat::PNG).unwrap();
     }
