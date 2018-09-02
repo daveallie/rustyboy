@@ -11,6 +11,7 @@
 extern crate glium;
 #[cfg(feature = "frame-capture")]
 extern crate image;
+extern crate glutin;
 
 mod clock;
 mod cpu;

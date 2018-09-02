@@ -9,7 +9,7 @@ debugger = []
 frame-capture = ["image"]
 
 [dependencies]
-# Waiting for update to glium - https://github.com/glium/glium/issues/1673
-glium = "0.19"
+glium = "0.22"
+glutin = "0.17"
 image = { version = "*", optional = true }
 clippy = { version = "*", optional = true }

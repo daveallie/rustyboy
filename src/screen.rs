@@ -1,4 +1,5 @@
 use glium::{self, glutin, texture, Surface};
+use glutin::dpi::LogicalSize;
 #[cfg(feature = "frame-capture")]
 use image;
 use input::{Key, KeyType};
@@ -41,7 +42,10 @@ impl Screen {
         let events_loop = glutin::EventsLoop::new();
         let window = glutin::WindowBuilder::new()
             .with_title(title)
-            .with_dimensions(Self::WIDTH * scale, Self::HEIGHT * scale);
+            .with_dimensions(LogicalSize::new(
+                f64::from(Self::WIDTH * scale),
+                f64::from(Self::HEIGHT * scale),
+            ));
 
         let context = glutin::ContextBuilder::new();
         let display = match glium::Display::new(window, context, &events_loop) {
@@ -116,7 +120,7 @@ impl Screen {
             } = ev
             {
                 match event {
-                    glutin::WindowEvent::Closed => closed = true,
+                    glutin::WindowEvent::CloseRequested => closed = true,
                     glutin::WindowEvent::KeyboardInput { input, .. } => {
                         let is_down = input.state == glutin::ElementState::Pressed;
 
@@ -213,8 +217,7 @@ impl Screen {
             format: glium::texture::ClientFormat::U8U8U8,
         };
 
-        #[cfg(feature = "frame-capture")]
-        self.save_frame(data);
+        #[cfg(feature = "frame-capture")] self.save_frame(data);
 
 
         self.texture.write(
@@ -254,12 +257,13 @@ impl Screen {
     }
 
     #[cfg(feature = "frame-capture")]
-    fn save_frame(&mut self, data : &[u8]) {
+    fn save_frame(&mut self, data: &[u8]) {
         let image = image::ImageBuffer::from_raw(Self::WIDTH, Self::HEIGHT, data.to_vec()).unwrap();
         let image = image::DynamicImage::ImageRgb8(image);
-        let mut output = File::create(&Path::new(&format!("frames/frame-{:010}.png", self.frame_id))).unwrap();
+        let mut output = File::create(&Path::new(
+            &format!("frames/frame-{:010}.png", self.frame_id),
+        )).unwrap();
         self.frame_id += 1;
         image.save(&mut output, image::ImageFormat::PNG).unwrap();
     }
-
 }
