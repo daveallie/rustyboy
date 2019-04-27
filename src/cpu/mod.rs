@@ -45,7 +45,6 @@ impl CPU {
     }
 
     pub fn main_loop(&mut self) {
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation, cast_sign_loss))]
         let time_for_n_cycles = Duration::new(
             0,
             (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32,
@@ -147,13 +146,13 @@ impl CPU {
 
         let interrupt_jump_addresses: [u16; 5] = [0x40, 0x48, 0x50, 0x58, 0x60];
 
-        for flag_number in 0..4 {
-            let flag: u8 = 1 << flag_number;
+        for (flag_number, interrupt_jump_address) in interrupt_jump_addresses.iter().enumerate() {
+            let flag = 1 << (flag_number as u8);
             if interrupt_flags & flag > 0 {
                 self.mmu.reset_interrupt(flag);
                 let old_pc = self.reg.pc;
                 self.push_stack(old_pc);
-                self.reg.pc = interrupt_jump_addresses[flag_number];
+                self.reg.pc = *interrupt_jump_address;
                 return 4;
             }
         }
@@ -168,9 +167,7 @@ impl CPU {
     }
 
     fn get_signed_byte(&mut self) -> i8 {
-        #[cfg_attr(feature = "clippy", allow(cast_sign_loss, cast_possible_wrap))]
-        let signed_byte = self.get_byte() as i8;
-        signed_byte
+        self.get_byte() as i8
     }
 
     fn get_word(&mut self) -> u16 {
@@ -191,12 +188,7 @@ impl CPU {
     }
 
     fn jr(&mut self) {
-        #[cfg_attr(feature = "clippy", allow(cast_possible_wrap))]
         let n = self.get_byte() as i8;
-        #[cfg_attr(
-            feature = "clippy",
-            allow(cast_possible_wrap, cast_possible_truncation, cast_sign_loss)
-        )]
         let new_pc = (u32::from(self.reg.pc) as i32 + i32::from(n)) as u16;
         self.reg.pc = new_pc;
     }

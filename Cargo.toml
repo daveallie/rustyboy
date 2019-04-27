@@ -9,7 +9,7 @@ debugger = []
 frame-capture = ["image"]
 
 [dependencies]
-glium = "0.22"
-glutin = "0.17"
+glium = "0.24"
+glutin = "0.20"
 image = { version = "*", optional = true }
 clippy = { version = "*", optional = true }

@@ -226,11 +226,8 @@ impl Screen {
         // I need to double the width and height as I'm developing on a retina display
         // only renders to quarter of window otherwise
 
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let width = i32::from(unsigned_width as u16);
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let height = i32::from(unsigned_height as u16);
-        #[cfg_attr(feature = "clippy", allow(cast_sign_loss))]
         let blit_target = glium::BlitTarget {
             left: 0,
             bottom: height as u32,

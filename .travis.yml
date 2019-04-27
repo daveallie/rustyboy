@@ -3,12 +3,12 @@ cache: cargo
 matrix:
   include:
   - rust: stable
-  - rust: nightly
-    env: BUILD_FEATURES=clippy
 before_script:
   - export PATH="$PATH:$HOME/.cargo/bin"
-  - rustup component add rustfmt-preview
+  - rustup component add rustfmt
+  - rustup component add clippy
 script:
   - cargo fmt -- --check
-  - cargo build --verbose --features "${BUILD_FEATURES}"
+  - cargo clippy -- -D warnings
+  - cargo build --verbose
   - cargo test --verbose

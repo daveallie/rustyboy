@@ -189,18 +189,14 @@ impl GPU {
         for x in 0..Screen::WIDTH {
             let (tile_number, x_pixel_in_tile, y_pixel_in_tile): (u8, u8, u16) = if self.rendering_window(x) {
                 let winx = x + 7 - u32::from(self.win_x);
-                #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
                 let winx_tile = ((winx & 0xFF) >> 3) as u16;
-                #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
                 let winx_pixel_in_tile = 7 - (winx & 0x07) as u8;
 
                 let tile_number: u8 = self.read_video_ram(self.window_tile_map_addr() + winy_tile * 32 + winx_tile);
                 (tile_number, winx_pixel_in_tile, winy_pixel_in_tile)
             } else {
                 let bgx = u32::from(self.scx) + x;
-                #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
                 let bgx_tile = ((bgx & 0xFF) >> 3) as u16;
-                #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
                 let bgx_pixel_in_tile = 7 - (bgx & 0x07) as u8;
 
                 let tile_number: u8 = self.read_video_ram(self.bg_tile_map_addr() + bgy_tile * 32 + bgx_tile);
@@ -244,10 +240,6 @@ impl GPU {
             u16::from(tile_number) * 16
         } else {
             // reading with offset
-            #[cfg_attr(
-                feature = "clippy",
-                allow(cast_possible_truncation, cast_sign_loss, cast_possible_wrap)
-            )]
             let adjusted_tile_number = (i16::from(tile_number as i8) + 128) as u16;
             adjusted_tile_number * 16
         };

@@ -79,13 +79,9 @@ impl MBC3 {
         }
 
         let days = seconds_to_now / 3600 / 24;
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let seconds = (seconds_to_now % 60) as u8;
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let minutes = ((seconds_to_now / 60) % 60) as u8;
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let hours = ((seconds_to_now / 3600) % 24) as u8;
-        #[cfg_attr(feature = "clippy", allow(cast_possible_truncation))]
         let trunc_days = (days & 0xFF) as u8;
 
         self.rtc_register[0] = seconds;

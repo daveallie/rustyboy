@@ -1,19 +1,13 @@
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
-#![cfg_attr(feature = "clippy", deny(clippy_pedantic))]
-#![cfg_attr(
-    feature = "clippy",
-    allow(missing_docs_in_private_items, similar_names, needless_range_loop)
-)]
-#![deny(
-    missing_debug_implementations,
-    missing_copy_implementations,
-    trivial_casts,
-    trivial_numeric_casts
-)]
-#![deny(unsafe_code, unused_import_braces, unused_qualifications)]
+//#![allow(missing_docs_in_private_items, similar_names, needless_range_loop)]
+//#![deny(
+//    missing_debug_implementations,
+//    missing_copy_implementations,
+//    trivial_casts,
+//    trivial_numeric_casts
+//)]
+//#![deny(unsafe_code, unused_import_braces, unused_qualifications)]
 // until I have logging
-#![cfg_attr(feature = "clippy", allow(print_stdout))]
+//#![allow(print_stdout)]
 
 extern crate glium;
 extern crate glutin;

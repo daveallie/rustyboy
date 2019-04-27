@@ -132,9 +132,7 @@ impl Registers {
         self.set_flag(Flags::Z, false);
         self.set_flag(Flags::H, (input16_adj ^ input8_adj ^ result) & 0x10 != 0);
         self.set_flag(Flags::C, (input16_adj ^ input8_adj ^ result) & 0x100 != 0);
-        #[cfg_attr(feature = "clippy", allow(cast_sign_loss, cast_possible_truncation))]
-        let casted_result = result as u16;
-        casted_result
+        result as u16
     }
 
     // --------------- MISCELLANEOUS ---------------
