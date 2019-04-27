@@ -80,6 +80,7 @@ impl SquareSettings {
 
 pub struct Square {
     enabled: bool,
+    sweep_enabled: bool,
     volume: u8,
     frequency: u16,
     length: u8,
@@ -99,9 +100,10 @@ impl Square {
         [0, 1, 1, 1, 1, 1, 1, 0],
     ];
 
-    pub fn new() -> Self {
+    pub fn new(sweep_enabled: bool) -> Self {
         Self {
             enabled: false,
+            sweep_enabled,
             volume: 0,
             frequency: 0,
             length: 0,
@@ -127,7 +129,7 @@ impl Square {
                 self.enabled = true;
                 self.length = self.settings.sound_length;
                 self.frequency = self.settings.frequency;
-                if self.settings.sweep.shift > 0 && self.settings.sweep.period > 0 {
+                if self.sweep_enabled && self.settings.sweep.shift > 0 && self.settings.sweep.period > 0 {
                     self.sweep_tick_counter = 0;
                     self.tick_sweep();
                 }
@@ -169,7 +171,7 @@ impl Square {
     }
 
     pub fn tick_sweep(&mut self) {
-        if self.settings.sweep.period == 0 && self.settings.sweep.shift == 0 {
+        if !self.sweep_enabled || self.settings.sweep.period == 0 && self.settings.sweep.shift == 0 {
             return;
         }
 

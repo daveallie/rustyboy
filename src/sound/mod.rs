@@ -10,6 +10,7 @@ pub struct Sound {
     cycle_counter: u32,
     tick_counter: u8,
     square1: Square,
+    square2: Square,
 //    noise: Noise,
     player: Player,
 }
@@ -19,8 +20,7 @@ impl Sound {
     pub const CYCLES_PER_SOUND: u16 = (Sound::CYCLES_PER_TICK / 128) as u16; // 32
 
     pub fn new() -> Self {
-//        Self { noise: Noise::new() /*, player: Player::new() */ }
-        Self { reg_values: [0; 0x17], cycle_counter: 0, tick_counter: 0, square1: Square::new(), player: Player::new() }
+        Self { reg_values: [0; 0x17], cycle_counter: 0, tick_counter: 0, square1: Square::new(true), square2: Square::new(false), player: Player::new() }
     }
 
     pub fn read_byte(&self, addr: u16) -> u8 {
@@ -39,7 +39,7 @@ impl Sound {
         self.reg_values[(addr - 0xFF10) as usize] = value;
         match addr {
             0xFF10...0xFF14 => self.square1.write_byte(addr, value),
-            0xFF15...0xFF19 => (), // square2
+            0xFF15...0xFF19 => self.square2.write_byte(addr, value),
             0xFF1A...0xFF1E => (), // wave
             0xFF20...0xFF23 => (), // self.noise.write_byte(addr, value),
             0xFF24...0xFF26 => (), // control/status
@@ -59,24 +59,26 @@ impl Sound {
         self.tick_counter += 1;
 
         let mut square1_sound = self.square1.generate_sound();
+        let mut square2_sound = self.square2.generate_sound();
+        let mut output = [0_f32; 128];
         for i in 0..128 {
-            square1_sound[i] /= 15.0;
+            output[i] = square1_sound[i] / 30.0 + square2_sound[i] / 30.0;
         }
-//        let noise_sound = self.noise.generate_sound();
+
         self.square1.decrement_length();
-//        self.noise.decrement_length();
+        self.square2.decrement_length();
 
         if self.tick_counter % 2 == 0 {
             self.square1.tick_sweep();
-//            self.noise.tick_sweep();
+            self.square2.tick_sweep();
         }
 
         if self.tick_counter % 4 == 0 {
             self.square1.tick_volume_envelope();
-//            self.noise.tick_volume_envelope();
+            self.square2.tick_volume_envelope();
             self.tick_counter = 0;
         }
 
-        self.player.play(&square1_sound, &square1_sound)
+        self.player.play(&output, &output)
     }
 }
