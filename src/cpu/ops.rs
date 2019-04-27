@@ -2722,7 +2722,6 @@ impl CPU {
                 self.reg.a = read_regs.a | (1 << 7);
                 2
             }
-            _ => panic!("unknown CB op code 0x{:X} at 0x{:X}", code, read_regs.pc),
         }
     }
 }
