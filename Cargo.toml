@@ -9,6 +9,7 @@ debugger = []
 frame-capture = ["image"]
 
 [dependencies]
+cpal = "0.8.2"
 glium = "0.24"
 glutin = "0.20"
 image = { version = "*", optional = true }

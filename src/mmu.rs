@@ -51,6 +51,8 @@ impl MMU {
         self.interrupt_flags |= self.gpu.interrupt;
         self.gpu.interrupt = 0;
 
+        self.sound.run_cycle(cpu_cycles);
+
         self.clock.run_cycle(cpu_cycles);
         self.interrupt_flags |= self.clock.interrupt;
         self.clock.interrupt = 0;

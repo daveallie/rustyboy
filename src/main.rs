@@ -9,6 +9,7 @@
 // until I have logging
 //#![allow(print_stdout)]
 
+extern crate cpal;
 extern crate glium;
 extern crate glutin;
 #[cfg(feature = "frame-capture")]

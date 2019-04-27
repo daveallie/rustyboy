@@ -1,29 +1,82 @@
 mod channel;
 
-use sound::channel::noise::Noise;
+//use sound::channel::noise::Noise;
+use sound::channel::square::Square;
+use sound::channel::player::Player;
+use cpu::CPU;
 
 pub struct Sound {
-    noise: Noise,
+    reg_values: [u8; 0x17], // store reg values here as shadow register is used in channels
+    cycle_counter: u32,
+    tick_counter: u8,
+    square1: Square,
+//    noise: Noise,
+    player: Player,
 }
 
 impl Sound {
+    pub const CYCLES_PER_TICK: u32 = CPU::CYCLE_SPEED / 256; // 4096
+    pub const CYCLES_PER_SOUND: u16 = (Sound::CYCLES_PER_TICK / 128) as u16; // 32
+
     pub fn new() -> Self {
-        Self { noise: Noise::new() }
+//        Self { noise: Noise::new() /*, player: Player::new() */ }
+        Self { reg_values: [0; 0x17], cycle_counter: 0, tick_counter: 0, square1: Square::new(), player: Player::new() }
     }
 
     pub fn read_byte(&self, addr: u16) -> u8 {
-        match addr {
-            0xFF10...0xFF1F | 0xFF24...0xFF26 => 0, // TODO: Implement
-            0xFF20...0xFF23 => self.noise.read_byte(addr),
-            _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
-        }
+        self.reg_values[(addr - 0xFF10) as usize]
+//        match addr {
+//            0xFF10...0xFF14 => self.square1.read_byte(addr),
+//            0xFF15...0xFF19 => 0, // square2
+//            0xFF1A...0xFF1E => 0, // wave
+//            0xFF1F...0xFF23 => 0, // self.noise.read_byte(addr),
+//            0xFF24...0xFF26 => 0, // control/status
+//            _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
+//        }
     }
 
     pub fn write_byte(&mut self, addr: u16, value: u8) {
+        self.reg_values[(addr - 0xFF10) as usize] = value;
         match addr {
-            0xFF10...0xFF1F | 0xFF24...0xFF26 => (), // TODO: Implement
-            0xFF20...0xFF23 => self.noise.write_byte(addr, value),
+            0xFF10...0xFF14 => self.square1.write_byte(addr, value),
+            0xFF15...0xFF19 => (), // square2
+            0xFF1A...0xFF1E => (), // wave
+            0xFF20...0xFF23 => (), // self.noise.write_byte(addr, value),
+            0xFF24...0xFF26 => (), // control/status
             _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
         }
+
+
+    }
+
+    pub fn run_cycle(&mut self, cycles: u8) {
+        self.cycle_counter += u32::from(cycles);
+        if self.cycle_counter < Self::CYCLES_PER_TICK {
+            return;
+        }
+
+        self.cycle_counter -= Self::CYCLES_PER_TICK;
+        self.tick_counter += 1;
+
+        let mut square1_sound = self.square1.generate_sound();
+        for i in 0..128 {
+            square1_sound[i] /= 15.0;
+        }
+//        let noise_sound = self.noise.generate_sound();
+        self.square1.decrement_length();
+//        self.noise.decrement_length();
+
+        if self.tick_counter % 2 == 0 {
+            self.square1.tick_sweep();
+//            self.noise.tick_sweep();
+        }
+
+        if self.tick_counter % 4 == 0 {
+            self.square1.tick_volume_envelope();
+//            self.noise.tick_volume_envelope();
+            self.tick_counter = 0;
+        }
+
+        self.player.play(&square1_sound, &square1_sound)
     }
 }

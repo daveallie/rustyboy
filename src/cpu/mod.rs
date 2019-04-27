@@ -21,7 +21,7 @@ pub struct CPU {
 
 impl CPU {
     const CLOCK_SPEED: u32 = 0x400_000_u32; // 4_194_304
-    pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576
+    pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576 = 1MHz
     const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
 
     pub fn new(
