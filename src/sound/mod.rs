@@ -60,10 +60,10 @@ impl Sound {
         self.cycle_counter -= Self::CYCLES_PER_TICK;
         self.tick_counter += 1;
 
-        let mut square1_sound = self.square1.generate_sound();
-        let mut square2_sound = self.square2.generate_sound();
-        let mut output = [0_f32; 178];
-        for i in 0..128 {
+        let square1_sound = self.square1.generate_sound();
+        let square2_sound = self.square2.generate_sound();
+        let mut output = [0_f32; Sound::SAMPLES_PER_CALL as usize];
+        for i in 0..(Sound::SAMPLES_PER_CALL as usize) {
             output[i] = square1_sound[i] / 30.0 + square2_sound[i] / 30.0;
         }
 
