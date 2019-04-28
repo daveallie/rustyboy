@@ -29,7 +29,7 @@ impl Clock {
     pub fn run_cycle(&mut self, cpu_cycles: u8) {
         self.divider_increment_timer += u32::from(cpu_cycles);
         while self.divider_increment_timer >= Self::DIVIDER_TIMER_LIMIT {
-            self.divider.wrapping_add(1);
+            self.divider = self.divider.wrapping_add(1);
             self.divider_increment_timer -= Self::DIVIDER_TIMER_LIMIT;
         }
 
@@ -40,7 +40,7 @@ impl Clock {
         self.counter_increment_timer += u32::from(cpu_cycles);
         let counter_timer_limit = CPU::CYCLE_SPEED / self.counter_speed();
         while self.counter_increment_timer >= counter_timer_limit {
-            self.counter.wrapping_add(1);
+            self.counter = self.counter.wrapping_add(1);
             self.counter_increment_timer -= counter_timer_limit;
             if self.counter == 0 {
                 self.interrupt = 0x04;
