@@ -17,7 +17,9 @@ pub struct Sound {
 
 impl Sound {
     pub const CYCLES_PER_TICK: u32 = CPU::CYCLE_SPEED / 256; // 4096
-    pub const CYCLES_PER_SOUND: u16 = (Sound::CYCLES_PER_TICK / 128) as u16; // 32
+    pub const CYCLES_PER_SOUND: u16 = 23;
+    pub const SAMPLES_PER_CALL: u16 = 173;
+    pub const ADDITIONAL_CYCLES_PER_TICK: u16 = (Self::CYCLES_PER_TICK - (Self::SAMPLES_PER_CALL * Self::CYCLES_PER_SOUND) as u32) as u16;
 
     pub fn new() -> Self {
         Self { reg_values: [0; 0x17], cycle_counter: 0, tick_counter: 0, square1: Square::new(true), square2: Square::new(false), player: Player::new() }
@@ -60,7 +62,7 @@ impl Sound {
 
         let mut square1_sound = self.square1.generate_sound();
         let mut square2_sound = self.square2.generate_sound();
-        let mut output = [0_f32; 128];
+        let mut output = [0_f32; 178];
         for i in 0..128 {
             output[i] = square1_sound[i] / 30.0 + square2_sound[i] / 30.0;
         }

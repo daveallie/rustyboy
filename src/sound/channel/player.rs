@@ -10,13 +10,9 @@ pub struct Player {
 impl Player {
     pub fn new() -> Self {
         let device = cpal::default_output_device().expect("Failed to get default output device");
-        let format = device.default_output_format().expect("Failed to get default output format");
-
-        println!("{:?}", format);
-
         let format = cpal::Format {
             channels: 2,
-            sample_rate: cpal::SampleRate(32_000),
+            sample_rate: cpal::SampleRate(44_100),
             data_type: cpal::SampleFormat::F32,
         };
 

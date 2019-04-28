@@ -129,6 +129,7 @@ impl Square {
                 self.enabled = true;
                 self.length = self.settings.sound_length;
                 self.frequency = self.settings.frequency;
+                self.volume = self.settings.envelope.starting_volume;
                 if self.sweep_enabled && self.settings.sweep.shift > 0 && self.settings.sweep.period > 0 {
                     self.sweep_tick_counter = 0;
                     self.tick_sweep();
@@ -137,28 +138,37 @@ impl Square {
         }
     }
 
-    // called at 256Hz
-    pub fn generate_sound(&mut self) -> [f32; 128] { // 128 comes from 32768 / 256
-        let mut sound = [0_f32; 128];
+    // called at 256Hz (4096 CPU cycles)
+    // To get 44100 samples, this function should return about 173 samples
+    // Each of those samples ~24 cycles apart
+    pub fn generate_sound(&mut self) -> [f32; Sound::SAMPLES_PER_CALL as usize] {
+        let mut sound = [0_f32; Sound::SAMPLES_PER_CALL as usize];
         if !self.enabled || self.volume == 0 {
             return sound;
         }
 
-        // every 32 cycles, add item to array
+        // every 23 cycles, add item to array
         // every period, adjust square_wave_step
         // run for total of Sound::CYCLES_PER_TICK cycles
-
-        for index in 0..(Sound::CYCLES_PER_TICK / u32::from(Sound::CYCLES_PER_SOUND)) {
+        for index in 0..Sound::SAMPLES_PER_CALL {
             sound[index as usize] = f32::from(self.volume) * f32::from(Self::DUTY_LAYOUTS[self.settings.duty as usize][self.square_wave_step as usize]);
-
-            if self.sound_tick_countdown < Sound::CYCLES_PER_SOUND {
-                self.sound_tick_countdown = 2048 - self.frequency - Sound::CYCLES_PER_SOUND;
-            } else {
-                self.sound_tick_countdown -= Sound::CYCLES_PER_SOUND;
-            }
+            self.decrement_sound_tick_countdown(Sound::CYCLES_PER_SOUND);
         }
 
+        self.decrement_sound_tick_countdown(Sound::ADDITIONAL_CYCLES_PER_TICK);
+
         sound
+    }
+
+    fn decrement_sound_tick_countdown(&mut self, amount: u16) {
+        let mut amount = amount;
+        while self.sound_tick_countdown < amount {
+            amount -= self.sound_tick_countdown;
+            self.sound_tick_countdown = 2048 - self.frequency;
+            self.square_wave_step = (self.square_wave_step + 1) % 8;
+        }
+
+        self.sound_tick_countdown -= amount;
     }
 
     pub fn decrement_length(&mut self) {
