@@ -1,9 +1,9 @@
 mod channel;
 
 //use sound::channel::noise::Noise;
-use sound::channel::square::Square;
-use sound::channel::player::Player;
 use cpu::CPU;
+use sound::channel::player::Player;
+use sound::channel::square::Square;
 
 pub struct Sound {
     reg_values: [u8; 0x17], // store reg values here as shadow register is used in channels
@@ -11,7 +11,7 @@ pub struct Sound {
     tick_counter: u8,
     square1: Square,
     square2: Square,
-//    noise: Noise,
+    // noise: Noise,
     player: Player,
 }
 
@@ -19,22 +19,22 @@ impl Sound {
     pub const CYCLES_PER_TICK: u32 = CPU::CYCLE_SPEED / 256; // 4096
     pub const CYCLES_PER_SOUND: u16 = 23;
     pub const SAMPLES_PER_CALL: u16 = 173;
-    pub const ADDITIONAL_CYCLES_PER_TICK: u16 = (Self::CYCLES_PER_TICK - (Self::SAMPLES_PER_CALL * Self::CYCLES_PER_SOUND) as u32) as u16;
+    pub const ADDITIONAL_CYCLES_PER_TICK: u16 =
+        (Self::CYCLES_PER_TICK - (Self::SAMPLES_PER_CALL * Self::CYCLES_PER_SOUND) as u32) as u16;
 
     pub fn new() -> Self {
-        Self { reg_values: [0; 0x17], cycle_counter: 0, tick_counter: 0, square1: Square::new(true), square2: Square::new(false), player: Player::new() }
+        Self {
+            reg_values: [0; 0x17],
+            cycle_counter: 0,
+            tick_counter: 0,
+            square1: Square::new(true),
+            square2: Square::new(false),
+            player: Player::new(),
+        }
     }
 
     pub fn read_byte(&self, addr: u16) -> u8 {
         self.reg_values[(addr - 0xFF10) as usize]
-//        match addr {
-//            0xFF10...0xFF14 => self.square1.read_byte(addr),
-//            0xFF15...0xFF19 => 0, // square2
-//            0xFF1A...0xFF1E => 0, // wave
-//            0xFF1F...0xFF23 => 0, // self.noise.read_byte(addr),
-//            0xFF24...0xFF26 => 0, // control/status
-//            _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
-//        }
     }
 
     pub fn write_byte(&mut self, addr: u16, value: u8) {
@@ -47,8 +47,6 @@ impl Sound {
             0xFF24...0xFF26 => (), // control/status
             _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
         }
-
-
     }
 
     pub fn run_cycle(&mut self, cycles: u8) {

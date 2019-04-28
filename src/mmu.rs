@@ -102,10 +102,10 @@ impl MMU {
             // 0xFF30...0xFF3F => (), // Sound wave pattern RAM
             0xFF46 => self.dma_into_oam(value),
             0xFF40...0xFF45 | 0xFF47...0xFF4B => self.gpu.write_control(addr, value),
-//            0xFF4C...0xFF7F => panic!(
-//                "MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}",
-//                addr
-//            ),
+            /*0xFF4C...0xFF7F => panic!(
+                "MMU ERROR: Memory mapped I/O (write) (CGB only) not implemented. Addr: 0x{:X}",
+                addr
+            ),*/
             0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize] = value, // High RAM
             0xFFFF => self.interrupt_enabled = value,                     // Interrupt enable
             _ => (),

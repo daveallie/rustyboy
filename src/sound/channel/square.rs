@@ -24,7 +24,13 @@ struct SweepSettings {
 }
 
 impl SweepSettings {
-    pub fn new() -> Self { Self { period: 0, frequency_increasing: false, shift: 0 } }
+    pub fn new() -> Self {
+        Self {
+            period: 0,
+            frequency_increasing: false,
+            shift: 0,
+        }
+    }
 
     pub fn write_byte(&mut self, value: u8) {
         self.period = (value >> 4) & 0x07;
@@ -57,7 +63,15 @@ struct SquareSettings {
 }
 
 impl SquareSettings {
-    pub fn new() -> Self { Self { duty: 0, sound_length: 0, frequency: 0, envelope: EnvelopeSettings::new(), sweep: SweepSettings::new() }}
+    pub fn new() -> Self {
+        Self {
+            duty: 0,
+            sound_length: 0,
+            frequency: 0,
+            envelope: EnvelopeSettings::new(),
+            sweep: SweepSettings::new(),
+        }
+    }
 
     pub fn write_byte(&mut self, addr: u16, value: u8) {
         match addr {
@@ -65,14 +79,14 @@ impl SquareSettings {
             0xFF11 | 0xFF16 => {
                 self.duty = value >> 6;
                 self.sound_length = 64 - (value & 0x3F);
-            },
+            }
             0xFF12 | 0xFF17 => self.envelope.write_byte(value),
             0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | u16::from(value),
             0xFF14 | 0xFF19 => {
                 // trigger
                 // length enable
                 self.frequency = u16::from(value & 0x07) << 8 | (self.frequency & 0x00FF);
-            },
+            }
             _ => unreachable!("Unreachable square channel sound write operation: 0x{:X}", addr),
         }
     }
@@ -151,7 +165,8 @@ impl Square {
         // every period, adjust square_wave_step
         // run for total of Sound::CYCLES_PER_TICK cycles
         for index in 0..Sound::SAMPLES_PER_CALL {
-            sound[index as usize] = f32::from(self.volume) * f32::from(Self::DUTY_LAYOUTS[self.settings.duty as usize][self.square_wave_step as usize]);
+            sound[index as usize] = f32::from(self.volume)
+                * f32::from(Self::DUTY_LAYOUTS[self.settings.duty as usize][self.square_wave_step as usize]);
             self.decrement_sound_tick_countdown(Sound::CYCLES_PER_SOUND);
         }
 

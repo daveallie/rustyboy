@@ -6,7 +6,13 @@ pub struct EnvelopeSettings {
 }
 
 impl EnvelopeSettings {
-    pub fn new() -> Self { Self { period: 1, starting_volume: 0, volume_increasing: false } }
+    pub fn new() -> Self {
+        Self {
+            period: 1,
+            starting_volume: 0,
+            volume_increasing: false,
+        }
+    }
 
     pub fn write_byte(&mut self, byte: u8) {
         self.starting_volume = byte >> 4;
