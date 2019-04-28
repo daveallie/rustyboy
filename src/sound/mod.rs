@@ -1,7 +1,7 @@
 mod channel;
 
-//use sound::channel::noise::Noise;
 use cpu::CPU;
+use sound::channel::noise::Noise;
 use sound::channel::player::Player;
 use sound::channel::square::Square;
 
@@ -11,7 +11,7 @@ pub struct Sound {
     tick_counter: u8,
     square1: Square,
     square2: Square,
-    // noise: Noise,
+    noise: Noise,
     player: Player,
 }
 
@@ -29,6 +29,7 @@ impl Sound {
             tick_counter: 0,
             square1: Square::new(true),
             square2: Square::new(false),
+            noise: Noise::new(),
             player: Player::new(),
         }
     }
@@ -43,7 +44,7 @@ impl Sound {
             0xFF10...0xFF14 => self.square1.write_byte(addr, value),
             0xFF15...0xFF19 => self.square2.write_byte(addr, value),
             0xFF1A...0xFF1E => (), // wave
-            0xFF20...0xFF23 => (), // self.noise.write_byte(addr, value),
+            0xFF20...0xFF23 => self.noise.write_byte(addr, value),
             0xFF24...0xFF26 => (), // control/status
             _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
         }
@@ -60,13 +61,15 @@ impl Sound {
 
         let square1_sound = self.square1.generate_sound();
         let square2_sound = self.square2.generate_sound();
+        let noise_sound = self.noise.generate_sound();
         let mut output = [0_f32; Sound::SAMPLES_PER_CALL as usize];
         for i in 0..(Sound::SAMPLES_PER_CALL as usize) {
-            output[i] = square1_sound[i] / 30.0 + square2_sound[i] / 30.0;
+            output[i] = (square1_sound[i] + square2_sound[i] + noise_sound[i]) / 15.0 / 4.0;
         }
 
         self.square1.decrement_length();
         self.square2.decrement_length();
+        self.noise.decrement_length();
 
         if self.tick_counter % 2 == 0 {
             self.square1.tick_sweep();
@@ -76,6 +79,7 @@ impl Sound {
         if self.tick_counter % 4 == 0 {
             self.square1.tick_volume_envelope();
             self.square2.tick_volume_envelope();
+            self.noise.tick_volume_envelope();
             self.tick_counter = 0;
         }
 

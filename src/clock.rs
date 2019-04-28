@@ -11,8 +11,8 @@ pub struct Clock {
 }
 
 impl Clock {
-    const DIVIDER_INC_SPEED: u32 = 0x4000_u32;
-    const DIVIDER_TIMER_LIMIT: u32 = CPU::CYCLE_SPEED / Self::DIVIDER_INC_SPEED;
+    const DIVIDER_INC_SPEED: u32 = 0x4000_u32; // 16_384
+    const DIVIDER_TIMER_LIMIT: u32 = CPU::CYCLE_SPEED / Self::DIVIDER_INC_SPEED; // 64
 
     pub fn new() -> Self {
         Self {

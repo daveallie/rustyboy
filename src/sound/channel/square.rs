@@ -57,6 +57,7 @@ impl SweepSettings {
 struct SquareSettings {
     duty: u8,
     sound_length: u8,
+    length_enabled: bool,
     frequency: u16,
     envelope: EnvelopeSettings,
     sweep: SweepSettings,
@@ -67,6 +68,7 @@ impl SquareSettings {
         Self {
             duty: 0,
             sound_length: 0,
+            length_enabled: false,
             frequency: 0,
             envelope: EnvelopeSettings::new(),
             sweep: SweepSettings::new(),
@@ -83,8 +85,7 @@ impl SquareSettings {
             0xFF12 | 0xFF17 => self.envelope.write_byte(value),
             0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | u16::from(value),
             0xFF14 | 0xFF19 => {
-                // trigger
-                // length enable
+                self.length_enabled = value & 0x40 > 0;
                 self.frequency = u16::from(value & 0x07) << 8 | (self.frequency & 0x00FF);
             }
             _ => unreachable!("Unreachable square channel sound write operation: 0x{:X}", addr),
@@ -98,7 +99,6 @@ pub struct Square {
     volume: u8,
     frequency: u16,
     length: u8,
-    length_enabled: bool,
     square_wave_step: u8,
     volume_tick_counter: u8,
     sweep_tick_counter: u8,
@@ -121,7 +121,6 @@ impl Square {
             volume: 0,
             frequency: 0,
             length: 0,
-            length_enabled: false,
             square_wave_step: 0,
             volume_tick_counter: 0,
             sweep_tick_counter: 0,
@@ -136,18 +135,14 @@ impl Square {
             _ => unreachable!("Unreachable noise channel sound write operation: 0x{:X}", addr),
         }
 
-        if addr == 0xFF14 || addr == 0xFF19 {
-            self.length_enabled = value & 0x40 > 0;
-
-            if value & 0x80 > 0 {
-                self.enabled = true;
-                self.length = self.settings.sound_length;
-                self.frequency = self.settings.frequency;
-                self.volume = self.settings.envelope.starting_volume;
-                if self.sweep_enabled && self.settings.sweep.shift > 0 && self.settings.sweep.period > 0 {
-                    self.sweep_tick_counter = 0;
-                    self.tick_sweep();
-                }
+        if (addr == 0xFF14 || addr == 0xFF19) && value & 0x80 > 0 {
+            self.enabled = true;
+            self.length = self.settings.sound_length;
+            self.frequency = self.settings.frequency;
+            self.volume = self.settings.envelope.starting_volume;
+            if self.sweep_enabled && self.settings.sweep.shift > 0 && self.settings.sweep.period > 0 {
+                self.sweep_tick_counter = 0;
+                self.tick_sweep();
             }
         }
     }
@@ -187,7 +182,7 @@ impl Square {
     }
 
     pub fn decrement_length(&mut self) {
-        if self.length_enabled && self.length > 0 {
+        if self.settings.length_enabled && self.length > 0 {
             self.length -= 1;
             if self.length == 0 {
                 self.enabled = false;
