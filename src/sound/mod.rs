@@ -1,9 +1,11 @@
 mod channel;
+mod player;
+mod settings;
 
 use cpu::CPU;
 use sound::channel::noise::Noise;
-use sound::channel::player::Player;
 use sound::channel::square::Square;
+use sound::player::Player;
 
 pub struct Sound {
     reg_values: [u8; 0x17], // store reg values here as shadow register is used in channels

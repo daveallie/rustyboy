@@ -1,4 +1,4 @@
-use sound::channel::envelope_settings::EnvelopeSettings;
+use sound::settings::square_settings::SquareSettings;
 use sound::Sound;
 
 /*
@@ -16,82 +16,6 @@ NR22 FF17 VVVV APPP Starting volume, Envelope add mode, period
 NR23 FF18 FFFF FFFF Frequency LSB
 NR24 FF19 TL-- -FFF Trigger, Length enable, Frequency MSB
 */
-
-struct SweepSettings {
-    period: u8,
-    frequency_increasing: bool,
-    shift: u8,
-}
-
-impl SweepSettings {
-    pub fn new() -> Self {
-        Self {
-            period: 0,
-            frequency_increasing: false,
-            shift: 0,
-        }
-    }
-
-    pub fn write_byte(&mut self, value: u8) {
-        self.period = (value >> 4) & 0x07;
-        self.frequency_increasing = value & 0x08 == 0;
-        self.shift = value & 0x07;
-    }
-
-    pub fn tick(&self, current_frequency: u16) -> u16 {
-        let freq_mod = current_frequency >> self.shift;
-        if self.frequency_increasing {
-            if current_frequency + freq_mod > 2048 {
-                2048
-            } else {
-                current_frequency + freq_mod
-            }
-        } else if current_frequency < freq_mod {
-            0
-        } else {
-            current_frequency - freq_mod
-        }
-    }
-}
-
-struct SquareSettings {
-    duty: u8,
-    sound_length: u8,
-    length_enabled: bool,
-    frequency: u16,
-    envelope: EnvelopeSettings,
-    sweep: SweepSettings,
-}
-
-impl SquareSettings {
-    pub fn new() -> Self {
-        Self {
-            duty: 0,
-            sound_length: 0,
-            length_enabled: false,
-            frequency: 0,
-            envelope: EnvelopeSettings::new(),
-            sweep: SweepSettings::new(),
-        }
-    }
-
-    pub fn write_byte(&mut self, addr: u16, value: u8) {
-        match addr {
-            0xFF10 => self.sweep.write_byte(value),
-            0xFF11 | 0xFF16 => {
-                self.duty = value >> 6;
-                self.sound_length = 64 - (value & 0x3F);
-            }
-            0xFF12 | 0xFF17 => self.envelope.write_byte(value),
-            0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | u16::from(value),
-            0xFF14 | 0xFF19 => {
-                self.length_enabled = value & 0x40 > 0;
-                self.frequency = u16::from(value & 0x07) << 8 | (self.frequency & 0x00FF);
-            }
-            _ => unreachable!("Unreachable square channel sound write operation: 0x{:X}", addr),
-        }
-    }
-}
 
 pub struct Square {
     enabled: bool,
