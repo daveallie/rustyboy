@@ -21,7 +21,7 @@ impl NoiseSettings {
         Self {
             sound_length: 0,
             length_enabled: false,
-            frequency: 0,
+            frequency: 2048,
             envelope: EnvelopeSettings::new(),
             lfsr_7_bit_mode: false,
         }
@@ -36,7 +36,7 @@ impl NoiseSettings {
                 let clock_shift = u16::from(value) >> 4;
                 let divisor = match u16::from(value & 0x07) {
                     0 => 8_u16,
-                    divisor_code => 16 * divisor_code,
+                    divisor_code => 16 * (divisor_code + 1),
                 };
                 self.frequency = divisor << clock_shift;
             }
