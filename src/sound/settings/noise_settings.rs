@@ -35,7 +35,7 @@ impl NoiseSettings {
                 let clock_shift = u16::from(value) >> 4;
                 let divisor = match u16::from(value & 0x07) {
                     0 => 8_u16,
-                    divisor_code => 16 * (divisor_code + 1),
+                    divisor_code => 16 * divisor_code,
                 };
                 self.frequency = divisor << clock_shift;
             }

@@ -5,6 +5,7 @@ mod settings;
 use cpu::CPU;
 use sound::channel::noise::Noise;
 use sound::channel::square::Square;
+use sound::channel::wave::Wave;
 use sound::player::Player;
 
 pub struct Sound {
@@ -13,6 +14,7 @@ pub struct Sound {
     tick_counter: u8,
     square1: Square,
     square2: Square,
+    wave: Wave,
     noise: Noise,
     player: Player,
 }
@@ -31,21 +33,30 @@ impl Sound {
             tick_counter: 0,
             square1: Square::new(true),
             square2: Square::new(false),
+            wave: Wave::new(),
             noise: Noise::new(),
             player: Player::new(),
         }
     }
 
     pub fn read_byte(&self, addr: u16) -> u8 {
+        if addr >= 0xFF30 {
+            return self.wave.read_wave_ram(addr);
+        }
+
         self.reg_values[(addr - 0xFF10) as usize]
     }
 
     pub fn write_byte(&mut self, addr: u16, value: u8) {
+        if addr >= 0xFF30 {
+            return self.wave.write_wave_ram(addr, value);
+        }
+
         self.reg_values[(addr - 0xFF10) as usize] = value;
         match addr {
             0xFF10...0xFF14 => self.square1.write_byte(addr, value),
             0xFF15...0xFF19 => self.square2.write_byte(addr, value),
-            0xFF1A...0xFF1E => (), // wave
+            0xFF1A...0xFF1E => self.wave.write_byte(addr, value),
             0xFF20...0xFF23 => self.noise.write_byte(addr, value),
             0xFF24...0xFF26 => (), // control/status
             _ => unreachable!("Unreachable sound read operation: 0x{:X}", addr),
@@ -63,14 +74,16 @@ impl Sound {
 
         let square1_sound = self.square1.generate_sound();
         let square2_sound = self.square2.generate_sound();
+        let wave_sound = self.wave.generate_sound();
         let noise_sound = self.noise.generate_sound();
         let mut output = [0_f32; Sound::SAMPLES_PER_CALL as usize];
         for i in 0..(Sound::SAMPLES_PER_CALL as usize) {
-            output[i] = (square1_sound[i] + square2_sound[i] + noise_sound[i]) / 15.0 / 4.0;
+            output[i] = (square1_sound[i] + square2_sound[i] + wave_sound[i] + noise_sound[i]) / 15.0 / 4.0;
         }
 
         self.square1.decrement_length();
         self.square2.decrement_length();
+        self.wave.decrement_length();
         self.noise.decrement_length();
 
         if self.tick_counter % 2 == 0 {

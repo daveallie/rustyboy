@@ -74,7 +74,7 @@ impl MMU {
             0xFF04...0xFF07 => self.clock.read_byte(addr),                 // read Clock values
             0xFF0F => self.interrupt_flags,                                // Interrupt flags
             0xFF10...0xFF26 => self.sound.read_byte(addr),                 // Sound control
-            // 0xFF30...0xFF3F => 0, // Sound wave pattern RAM
+            0xFF30...0xFF3F => self.sound.read_byte(addr),                 // Sound wave pattern RAM
             0xFF40...0xFF4B => self.gpu.read_control(addr),
             0xFF4C...0xFF7F => panic!("MMU ERROR: Memory mapped I/O (read) (CGB only) not implemented"),
             0xFF80...0xFFFE => self.hram[(addr & 0x7F) as usize], // High RAM
@@ -99,7 +99,7 @@ impl MMU {
             0xFF04...0xFF07 => self.clock.write_byte(addr, value),                 // write Clock values
             0xFF0F => self.interrupt_flags = value,                                // Interrupt flags
             0xFF10...0xFF26 => self.sound.write_byte(addr, value),                 // Sound control
-            // 0xFF30...0xFF3F => (), // Sound wave pattern RAM
+            0xFF30...0xFF3F => self.sound.write_byte(addr, value),                 // Sound wave pattern RAM
             0xFF46 => self.dma_into_oam(value),
             0xFF40...0xFF45 | 0xFF47...0xFF4B => self.gpu.write_control(addr, value),
             /*0xFF4C...0xFF7F => panic!(

@@ -16,6 +16,8 @@ impl Player {
             data_type: cpal::SampleFormat::F32,
         };
 
+        println!("{:?}", format);
+
         let event_loop = cpal::EventLoop::new();
         let stream_id = event_loop.build_output_stream(&device, &format).unwrap();
         event_loop.play_stream(stream_id);

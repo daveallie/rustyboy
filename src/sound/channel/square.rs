@@ -56,7 +56,7 @@ impl Square {
     pub fn write_byte(&mut self, addr: u16, value: u8) {
         match addr {
             0xFF10...0xFF14 | 0xFF16...0xFF19 => self.settings.write_byte(addr, value),
-            _ => unreachable!("Unreachable noise channel sound write operation: 0x{:X}", addr),
+            _ => unreachable!("Unreachable square channel sound write operation: 0x{:X}", addr),
         }
 
         if (addr == 0xFF14 || addr == 0xFF19) && value & 0x80 > 0 {
