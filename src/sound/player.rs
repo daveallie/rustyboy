@@ -41,11 +41,13 @@ impl Player {
 fn run_event_loop(event_loop: cpal::EventLoop, bit_buf: Arc<Mutex<Vec<(f32, f32)>>>) {
     event_loop.run(move |_, data| {
         let mut in_bit_buf = bit_buf.lock().unwrap();
+        let mut n = 0;
 
         match data {
             cpal::StreamData::Output {
                 buffer: cpal::UnknownTypeOutputBuffer::U16(mut buffer),
             } => {
+                n = buffer.chunks_mut(2).len();
                 for (ref mut out, (in_l, in_r)) in buffer.chunks_mut(2).zip(in_bit_buf.iter()) {
                     out[0] = (in_l * f32::from(i16::max_value()) + f32::from(u16::max_value()) / 2.0) as u16;
                     out[1] = (in_r * f32::from(i16::max_value()) + f32::from(u16::max_value()) / 2.0) as u16;
@@ -54,6 +56,7 @@ fn run_event_loop(event_loop: cpal::EventLoop, bit_buf: Arc<Mutex<Vec<(f32, f32)
             cpal::StreamData::Output {
                 buffer: cpal::UnknownTypeOutputBuffer::I16(mut buffer),
             } => {
+                n = buffer.chunks_mut(2).len();
                 for (ref mut out, (in_l, in_r)) in buffer.chunks_mut(2).zip(in_bit_buf.iter()) {
                     out[0] = (in_l * f32::from(i16::max_value())) as i16;
                     out[1] = (in_r * f32::from(i16::max_value())) as i16;
@@ -62,6 +65,7 @@ fn run_event_loop(event_loop: cpal::EventLoop, bit_buf: Arc<Mutex<Vec<(f32, f32)
             cpal::StreamData::Output {
                 buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer),
             } => {
+                n = buffer.chunks_mut(2).len();
                 for (ref mut out, (in_l, in_r)) in buffer.chunks_mut(2).zip(in_bit_buf.iter()) {
                     out[0] = *in_l;
                     out[1] = *in_r;
@@ -70,6 +74,14 @@ fn run_event_loop(event_loop: cpal::EventLoop, bit_buf: Arc<Mutex<Vec<(f32, f32)
             _ => (),
         };
 
-        in_bit_buf.clear();
+        if in_bit_buf.len() > n {
+            in_bit_buf.drain(0..n);
+            if in_bit_buf.len() > n * 10 {
+                in_bit_buf.clear();
+                println!("CLEARING AUDIO BUFFER");
+            }
+        } else {
+            in_bit_buf.clear();
+        }
     })
 }

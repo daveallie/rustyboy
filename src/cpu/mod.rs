@@ -22,7 +22,7 @@ pub struct CPU {
 impl CPU {
     const CLOCK_SPEED: u32 = 0x400_000_u32; // 4_194_304
     pub const CYCLE_SPEED: u32 = Self::CLOCK_SPEED / 4; // 1_048_576 = 1MHz
-    const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192
+    const ADJUST_SPEED_EVERY_N_CYCLES: u32 = Self::CYCLE_SPEED / 64; // 8_192 // 64 times a second
 
     pub fn new(
         cart_path: &str,
@@ -47,7 +47,7 @@ impl CPU {
     pub fn main_loop(&mut self) {
         let time_for_n_cycles = Duration::new(
             0,
-            (1_000_000_000_f64 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32,
+            (1_000_000_000_f64 * 0.95 * f64::from(Self::ADJUST_SPEED_EVERY_N_CYCLES) / f64::from(Self::CYCLE_SPEED)) as u32,
         );
 
         let mut cycles_since_sleep: u32 = 0;
