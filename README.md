@@ -6,7 +6,7 @@ Gameboy emulator written in Rust.
 
 ## About
 
-Rustyboy is nothing groundbreaking, if that's what you were looking for, then sorry to disappoint.
+Rustyboy is groundbreaking.
 This doesn't do anything new or innovative, people have emulated the Gameboy in more performant ways using less 
 performant languages. This project exists as a challenge to myself, could I build a Gameboy that runs anything?
 
